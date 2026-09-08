@@ -20,6 +20,7 @@ A veterinary office currently has no shared system of record for clients, their 
 - `vaccination-schedules`: Per-pet vaccination calendar; vet full management; client read-only view.
 - `vaccination-sms-notifications`: Twilio SMS reminders before due dates; default-on with client and vet disable; per-pet age-based expiry with defaults.
 - `i18n`: Portuguese-primary, English-secondary UI and SMS copy.
+- `data-protection`: GDPR-oriented transparency, data-subject request handling, retention, processor governance, security, and incident-readiness controls required before production launch.
 
 ### Modified Capabilities
 
