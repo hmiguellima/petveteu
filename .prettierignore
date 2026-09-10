@@ -1,0 +1,6 @@
+.next
+.codex
+.cursor
+coverage
+node_modules
+package-lock.json

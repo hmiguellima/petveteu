@@ -1,0 +1,64 @@
+{
+  "common": {
+    "app": "PetVet EU",
+    "save": "Save",
+    "remove": "Remove",
+    "signOut": "Sign out",
+    "privacy": "Privacy",
+    "loading": "Loading…"
+  },
+  "home": {
+    "title": "Veterinary care without missed dates",
+    "lead": "Track your pets and receive vaccination reminders."
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "register": "Create account",
+    "name": "Full name",
+    "email": "Email",
+    "phone": "Mobile (+…)",
+    "password": "Password",
+    "error": "We could not complete that request. Check the details."
+  },
+  "client": {
+    "title": "My pets",
+    "profile": "My profile",
+    "addPet": "Add pet",
+    "schedule": "Vaccines",
+    "sms": "Receive SMS reminders"
+  },
+  "vet": {
+    "title": "Veterinary portal",
+    "clients": "Clients",
+    "addClient": "Invite client",
+    "pets": "Pets",
+    "vaccines": "Vaccines",
+    "runs": "Reminder runs"
+  },
+  "pet": {
+    "name": "Name",
+    "species": "Species",
+    "dog": "Dog",
+    "cat": "Cat",
+    "other": "Other",
+    "birth": "Date of birth",
+    "estimated": "Estimated date",
+    "breed": "Breed",
+    "expiry": "Reminder expiry age"
+  },
+  "vaccine": {
+    "type": "Vaccine",
+    "due": "Due date",
+    "administered": "Last administered",
+    "notes": "Notes",
+    "status": "Reminder status"
+  },
+  "privacy": {
+    "title": "Privacy notice",
+    "draft": "This notice may only be used in production after approval by the practice and qualified Portuguese legal review.",
+    "contact": "Contact the clinic to request access, correction, objection, restriction, or erasure."
+  },
+  "sms": {
+    "reminder": "Reminder: {pet}'s {vaccine} vaccination is due on {date}. Please contact the veterinary clinic."
+  }
+}

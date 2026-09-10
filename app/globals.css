@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+body {
+  background: #f7f3e8;
+  color: #17251f;
+}
+input,
+select,
+textarea {
+  border: 1px solid #b8c7be;
+  border-radius: 0.5rem;
+  padding: 0.65rem;
+  background: white;
+}
+button,
+.button {
+  border-radius: 0.5rem;
+  padding: 0.65rem 1rem;
+  background: #44765d;
+  color: white;
+}
+label {
+  display: grid;
+  gap: 0.3rem;
+}
+form {
+  display: grid;
+  gap: 1rem;
+}
+.card {
+  background: white;
+  border: 1px solid #dce4df;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 8px 30px #17251f0d;
+}

@@ -1,3 +1,38 @@
-# petveteu
+# PetVet EU
 
-Pet veterinary app
+Portuguese-first veterinary client portal, vaccination registry, and SMS reminder service. The web app is Next.js App Router on Vercel; Supabase owns Auth, Postgres/RLS, Edge Functions, and daily scheduling; Twilio submits outbound reminders.
+
+## Local setup
+
+Requirements: Node 20+, npm, Docker, and the Supabase CLI.
+
+1. Copy `.env.example` to `.env.local` and set the local Supabase URL and anon key. Never put the service-role key or Twilio secrets in Vercel.
+2. Run `npm install`, `supabase start`, and `supabase db reset`.
+3. Run `npm run dev`. Portuguese is the default; set the `locale` cookie or profile preference to `en` for English.
+4. Verify with `npm test`, `npm run typecheck`, `npm run build`, and `psql "$LOCAL_DB_URL" -f docs/database-verification.sql`.
+
+## Vet bootstrap
+
+There is no UI or authenticated API for creating vets. Set `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `BOOTSTRAP_VET_EMAIL`, and a strong `BOOTSTRAP_VET_PASSWORD` only in an operator shell, then run `node scripts/bootstrap-vet.mjs`. The partial unique database index rejects a second vet. Remove the bootstrap values afterward and enroll the vet in TOTP MFA.
+
+## Edge Functions and Twilio
+
+Set secrets with `supabase secrets set SUPABASE_SERVICE_ROLE_KEY=... TWILIO_ACCOUNT_SID=... TWILIO_AUTH_TOKEN=... TWILIO_FROM_NUMBER=... SMS_DRY_RUN=true`. Deploy `admin-clients` and `reminders`. Automated tests do not call Twilio. A dry run records an attempt without a SID and leaves its reminder pending.
+
+The database migration schedules the reminder endpoint for `0 8 * * *` UTC. Configure `app.settings.reminder_url` and a protected cron credential in Supabase, then validate standard-time and daylight-saving dates. The function always derives the business date in `Europe/Lisbon`. Failed or missing runs must feed the production alert configured during readiness review; a vet can rerun only the current Lisbon date from the portal.
+
+## Vercel deployment
+
+Import this repository into Vercel, select the Next.js preset, and configure only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Set Supabase Auth site/redirect URLs to the Vercel production domain. Apply migrations and deploy Edge Functions separately through Supabase.
+
+## Data protection and launch gate
+
+The privacy page is deliberately marked as an unapproved draft. Complete every item in [docs/production-readiness.md](docs/production-readiness.md) with the veterinary practice and qualified Portuguese legal advice before processing real data. This includes controller details, lawful bases, notice wording, DPAs/transfers, retention periods, DPIA/DPO decisions, MFA, incident response, restricted access, alerting, and restoration evidence. The retention function accepts dates only after the schedule is approved; never automate unapproved periods.
+
+Clinic-assisted rights requests are recorded in `data_subject_requests`; use the documented workflow to verify identity, export/correct/restrict data, record a minimal outcome, cancel future reminders on erasure, and honor only a documented continuing retention basis.
+
+## Verification
+
+- Database security checks: [docs/database-verification.sql](docs/database-verification.sql)
+- End-to-end procedure: [docs/smoke-test.md](docs/smoke-test.md)
+- Production gate: [docs/production-readiness.md](docs/production-readiness.md)
