@@ -1,0 +1,5 @@
+project_id = "petveteu"
+[functions.reminders]
+verify_jwt = false
+[functions.admin-clients]
+verify_jwt = true

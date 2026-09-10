@@ -24,9 +24,9 @@ Cross-stream rule: DB owns persistent shapes and authorization contracts. Web an
 
 ## 1. Project scaffold
 
-- [ ] 1.1 **[Foundation]** Initialize a Next.js App Router TypeScript app in the repo root with Tailwind, configured for Vercel; verify `npm run build` succeeds on an empty layout. **Depends on:** none.
-- [ ] 1.2 **[Foundation]** Add `@supabase/supabase-js`, `@supabase/ssr`, and `next-intl` with default locale `pt-PT` and alternate `en`; verify the app boots with a Portuguese homepage string. **Depends on:** 1.1. **Concurrent with:** 1.3.
-- [ ] 1.3 **[Foundation]** Add the `supabase/` migration/function structure and environment example (`NEXT_PUBLIC_SUPABASE_URL`, anon key, `SMS_DRY_RUN`); verify all required keys are listed without secrets. **Depends on:** 1.1. **Concurrent with:** 1.2.
+- [x] 1.1 **[Foundation]** Initialize a Next.js App Router TypeScript app in the repo root with Tailwind, configured for Vercel; verify `npm run build` succeeds on an empty layout. **Depends on:** none.
+- [x] 1.2 **[Foundation]** Add `@supabase/supabase-js`, `@supabase/ssr`, and `next-intl` with default locale `pt-PT` and alternate `en`; verify the app boots with a Portuguese homepage string. **Depends on:** 1.1. **Concurrent with:** 1.3.
+- [x] 1.3 **[Foundation]** Add the `supabase/` migration/function structure and environment example (`NEXT_PUBLIC_SUPABASE_URL`, anon key, `SMS_DRY_RUN`); verify all required keys are listed without secrets. **Depends on:** 1.1. **Concurrent with:** 1.2.
 
 ## 2. Database and authorization contract
 
@@ -60,7 +60,7 @@ Cross-stream rule: DB owns persistent shapes and authorization contracts. Web an
 
 ## 6. SMS reminders
 
-- [ ] 6.1 **[Jobs]** Implement the testable reminder eligibility and lifecycle engine using Europe/Lisbon, due dates in 0–2 days, both SMS flags, pet age/expiry, deletion, successful-submission deduplication, due-date changes, concurrency, transient retries through the due date, permanent skips, and exhaustion afterward. **Depends on:** 2.2, 2.3; may use fixtures before portal completion. **Concurrent with:** 3.x and 7.1.
+- [x] 6.1 **[Jobs]** Implement the testable reminder eligibility and lifecycle engine using Europe/Lisbon, due dates in 0–2 days, both SMS flags, pet age/expiry, deletion, successful-submission deduplication, due-date changes, concurrency, transient retries through the due date, permanent skips, and exhaustion afterward. **Depends on:** 2.2, 2.3; may use fixtures before portal completion. **Concurrent with:** 3.x and 7.1.
 - [ ] 6.2 **[Jobs]** Integrate Twilio submission and `SMS_DRY_RUN`; persist every attempt; verify dry-run has no SID and leaves the reminder pending, successful submission stores its SID, transient failure remains retryable, invalid phone is permanently skipped, and automated tests never call Twilio. **Depends on:** 6.1. **Coordinate with:** 7.2.
 - [ ] 6.3 **[Web/Jobs]** Complete client and vet SMS toggles, both default-on, and connect them to eligibility processing; verify either disabled flag prevents submission. **Depends on:** 4.1, 4.3, 6.1. **Concurrent with:** 5.2, 5.3, 7.2.
 - [ ] 6.4 **[Jobs]** Configure daily 08:00 UTC scheduling, Lisbon business-date calculation, job-run persistence, and locking against overlapping or duplicate successful batches. **Depends on:** 6.1, 6.2, 2.3.

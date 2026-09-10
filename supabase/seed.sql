@@ -1,0 +1,1 @@
+-- Development-only bootstrap is handled by scripts/bootstrap-vet.mjs.

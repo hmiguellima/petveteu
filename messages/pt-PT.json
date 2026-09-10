@@ -1,0 +1,64 @@
+{
+  "common": {
+    "app": "PetVet EU",
+    "save": "Guardar",
+    "remove": "Remover",
+    "signOut": "Terminar sessão",
+    "privacy": "Privacidade",
+    "loading": "A carregar…"
+  },
+  "home": {
+    "title": "Cuidados veterinários, sem esquecimentos",
+    "lead": "Acompanhe os seus animais e receba lembretes de vacinação."
+  },
+  "auth": {
+    "signIn": "Entrar",
+    "register": "Criar conta",
+    "name": "Nome completo",
+    "email": "Email",
+    "phone": "Telemóvel (+351…)",
+    "password": "Palavra-passe",
+    "error": "Não foi possível concluir. Verifique os dados."
+  },
+  "client": {
+    "title": "Os meus animais",
+    "profile": "O meu perfil",
+    "addPet": "Adicionar animal",
+    "schedule": "Vacinas",
+    "sms": "Receber lembretes SMS"
+  },
+  "vet": {
+    "title": "Área veterinária",
+    "clients": "Clientes",
+    "addClient": "Convidar cliente",
+    "pets": "Animais",
+    "vaccines": "Vacinas",
+    "runs": "Execuções de lembretes"
+  },
+  "pet": {
+    "name": "Nome",
+    "species": "Espécie",
+    "dog": "Cão",
+    "cat": "Gato",
+    "other": "Outra",
+    "birth": "Data de nascimento",
+    "estimated": "Data estimada",
+    "breed": "Raça",
+    "expiry": "Idade limite dos lembretes"
+  },
+  "vaccine": {
+    "type": "Vacina",
+    "due": "Data prevista",
+    "administered": "Última administração",
+    "notes": "Notas",
+    "status": "Estado do lembrete"
+  },
+  "privacy": {
+    "title": "Aviso de privacidade",
+    "draft": "Este aviso só pode ser usado em produção depois de aprovado pela clínica e por aconselhamento jurídico português.",
+    "contact": "Contacte a clínica para acesso, correção, oposição, limitação ou apagamento dos seus dados."
+  },
+  "sms": {
+    "reminder": "Lembrete: {pet} tem a vacina {vaccine} prevista para {date}. Contacte a clínica veterinária."
+  }
+}
