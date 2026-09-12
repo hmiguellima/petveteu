@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import { requireRole } from '@/lib/auth';
 import { createPet, removePet, updateProfile } from './actions';
-export default async function Page() {
+
+export default async function Page(): Promise<React.JSX.Element> {
   const { supabase, profile } = await requireRole('client');
   const { data: pets } = await supabase
     .from('pets')
     .select('*,vaccination_entries(*,reminders(*,reminder_attempts(*)))')
     .order('name');
+
   return (
     <>
       <header className="mb-8 flex justify-between">
@@ -47,28 +49,28 @@ export default async function Page() {
           <PetForm />
         </aside>
         <section className="space-y-4">
-          {pets?.map((p) => (
-            <article className="card" key={p.id}>
+          {pets?.map((pet) => (
+            <article className="card" key={pet.id}>
               <div className="flex justify-between">
-                <h2 className="text-2xl font-bold">{p.name}</h2>
+                <h2 className="text-2xl font-bold">{pet.name}</h2>
                 <form action={removePet}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <input type="hidden" name="version" value={p.version} />
+                  <input type="hidden" name="id" value={pet.id} />
+                  <input type="hidden" name="version" value={pet.version} />
                   <button className="bg-coral">Remover</button>
                 </form>
               </div>
               <p>
-                {p.species} · {p.date_of_birth}
-                {p.birth_date_is_estimated ? ' (estimada)' : ''} · lembretes até{' '}
-                {p.notification_expiry_years} anos
+                {pet.species} · {pet.date_of_birth}
+                {pet.birth_date_is_estimated ? ' (estimada)' : ''} · lembretes até{' '}
+                {pet.notification_expiry_years} anos
               </p>
               <h3 className="mt-5 font-bold">Vacinas</h3>
-              {p.vaccination_entries?.length ? (
+              {pet.vaccination_entries?.length ? (
                 <ul>
-                  {p.vaccination_entries.map(
-                    (v: { id: string; vaccine_type: string; due_date: string }) => (
-                      <li className="border-b py-2" key={v.id}>
-                        <strong>{v.vaccine_type}</strong> — {v.due_date}
+                  {pet.vaccination_entries.map(
+                    (vaccination: { id: string; vaccine_type: string; due_date: string }) => (
+                      <li className="border-b py-2" key={vaccination.id}>
+                        <strong>{vaccination.vaccine_type}</strong> — {vaccination.due_date}
                       </li>
                     ),
                   )}
@@ -83,7 +85,8 @@ export default async function Page() {
     </>
   );
 }
-function PetForm() {
+
+function PetForm(): React.JSX.Element {
   return (
     <form action={createPet}>
       <label>

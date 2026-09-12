@@ -20,14 +20,21 @@ function deepFallback<T extends Record<string, unknown>>(
           )
         : value;
   }
+
   return result as T;
 }
 
-export function reminderText(locale: Locale, pet: string, vaccine: string, dueDate: string) {
+export function reminderText(
+  locale: Locale,
+  pet: string,
+  vaccine: string,
+  dueDate: string,
+): string {
   const date = new Intl.DateTimeFormat(locale, {
     dateStyle: 'long',
     timeZone: 'Europe/Lisbon',
   }).format(new Date(`${dueDate}T12:00:00Z`));
   const template = getCatalog(locale).sms.reminder;
+
   return template.replace('{pet}', pet).replace('{vaccine}', vaccine).replace('{date}', date);
 }

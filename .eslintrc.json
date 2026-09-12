@@ -2,7 +2,27 @@
   "extends": ["next/core-web-vitals", "next/typescript", "prettier"],
   "ignorePatterns": [".next/", "coverage/", "node_modules/"],
   "rules": {
-    "@typescript-eslint/consistent-type-imports": "error",
+    "array-callback-return": "error",
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      {
+        "fixStyle": "separate-type-imports",
+        "prefer": "type-imports"
+      }
+    ],
+    "@typescript-eslint/explicit-function-return-type": [
+      "error",
+      {
+        "allowExpressions": true,
+        "allowTypedFunctionExpressions": true
+      }
+    ],
+    "@typescript-eslint/explicit-module-boundary-types": [
+      "error",
+      {
+        "allowDirectConstAssertionInArrowFunctions": true
+      }
+    ],
     "@typescript-eslint/no-unused-vars": [
       "error",
       {
@@ -11,7 +31,58 @@
         "varsIgnorePattern": "^_"
       }
     ],
+    "@typescript-eslint/typedef": [
+      "error",
+      {
+        "arrayDestructuring": false,
+        "arrowParameter": false,
+        "memberVariableDeclaration": true,
+        "objectDestructuring": false,
+        "parameter": true,
+        "propertyDeclaration": true,
+        "variableDeclaration": false
+      }
+    ],
+    "complexity": ["error", 20],
+    "curly": ["error", "all"],
     "eqeqeq": ["error", "always"],
-    "prefer-const": "error"
+    "id-length": [
+      "error",
+      {
+        "min": 2,
+        "exceptions": ["T"],
+        "properties": "never"
+      }
+    ],
+    "max-depth": ["error", 4],
+    "max-lines-per-function": [
+      "error",
+      {
+        "max": 150,
+        "skipBlankLines": true,
+        "skipComments": true,
+        "IIFEs": true
+      }
+    ],
+    "no-duplicate-imports": ["error", { "includeExports": true }],
+    "no-else-return": ["error", { "allowElseIf": false }],
+    "no-lonely-if": "error",
+    "no-param-reassign": ["error", { "props": true }],
+    "no-var": "error",
+    "object-shorthand": ["error", "always"],
+    "one-var": ["error", "never"],
+    "one-var-declaration-per-line": ["error", "always"],
+    "padding-line-between-statements": [
+      "error",
+      { "blankLine": "always", "prev": "directive", "next": "*" },
+      { "blankLine": "any", "prev": "directive", "next": "directive" },
+      { "blankLine": "always", "prev": "import", "next": "*" },
+      { "blankLine": "any", "prev": "import", "next": "import" },
+      { "blankLine": "always", "prev": ["const", "let"], "next": "return" },
+      { "blankLine": "always", "prev": "block-like", "next": "return" }
+    ],
+    "prefer-const": "error",
+    "prefer-object-spread": "error",
+    "prefer-template": "error"
   }
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getCatalog, reminderText } from '@/lib/i18n';
+
 describe('catalogs', () => {
   it('falls back to Portuguese structure', () =>
     expect(getCatalog('en').common.app).toBe('PetVet EU'));

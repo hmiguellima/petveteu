@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { register } from '../actions';
-export default function Page() {
+
+export default function Page(): React.JSX.Element {
   return (
     <section className="mx-auto my-12 max-w-lg card">
       <h1 className="mb-6 text-3xl font-bold">Criar conta</h1>

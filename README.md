@@ -4,12 +4,12 @@ Portuguese-first veterinary client portal, vaccination registry, and SMS reminde
 
 ## Local setup
 
-Requirements: Node 20+, npm, Docker, and the Supabase CLI.
+Requirements: Node 20+, pnpm 10 or 11, Docker, and the Supabase CLI.
 
 1. Copy `.env.example` to `.env.local` and set the local Supabase URL and anon key. Never put the service-role key or Twilio secrets in Vercel.
-2. Run `npm install`, `supabase start`, and `supabase db reset`.
-3. Run `npm run dev`. Portuguese is the default; set the `locale` cookie or profile preference to `en` for English.
-4. Verify with `npm test`, `npm run typecheck`, `npm run build`, and `psql "$LOCAL_DB_URL" -f docs/database-verification.sql`.
+2. Run `pnpm install`, `supabase start`, and `supabase db reset`.
+3. Run `pnpm dev`. Portuguese is the default; set the `locale` cookie or profile preference to `en` for English.
+4. Verify with `pnpm test`, `pnpm typecheck`, `pnpm build`, and `psql "$LOCAL_DB_URL" -f docs/database-verification.sql`.
 
 ## Vet bootstrap
 

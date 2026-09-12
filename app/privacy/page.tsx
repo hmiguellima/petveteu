@@ -1,4 +1,4 @@
-export default function Page() {
+export default function Page(): React.JSX.Element {
   return (
     <article className="prose mx-auto card">
       <h1>Aviso de privacidade / Privacy notice</h1>

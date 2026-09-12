@@ -24,7 +24,7 @@ Cross-stream rule: DB owns persistent shapes and authorization contracts. Web an
 
 ## 1. Project scaffold
 
-- [x] 1.1 **[Foundation]** Initialize a Next.js App Router TypeScript app in the repo root with Tailwind, configured for Vercel; verify `npm run build` succeeds on an empty layout. **Depends on:** none.
+- [x] 1.1 **[Foundation]** Initialize a Next.js App Router TypeScript app in the repo root with Tailwind, configured for Vercel; verify `pnpm build` succeeds on an empty layout. **Depends on:** none.
 - [x] 1.2 **[Foundation]** Add `@supabase/supabase-js`, `@supabase/ssr`, and `next-intl` with default locale `pt-PT` and alternate `en`; verify the app boots with a Portuguese homepage string. **Depends on:** 1.1. **Concurrent with:** 1.3.
 - [x] 1.3 **[Foundation]** Add the `supabase/` migration/function structure and environment example (`NEXT_PUBLIC_SUPABASE_URL`, anon key, `SMS_DRY_RUN`); verify all required keys are listed without secrets. **Depends on:** 1.1. **Concurrent with:** 1.2.
 

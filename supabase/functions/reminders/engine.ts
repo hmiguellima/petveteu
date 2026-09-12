@@ -14,7 +14,8 @@ export type Candidate = {
   permanentReason?: string | null;
 };
 export type Decision = { kind: 'eligible' | 'skip' | 'exhaust'; reason?: string };
-export function lisbonDate(now = new Date()) {
+
+export function lisbonDate(now: Date = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Lisbon',
     year: 'numeric',
@@ -22,25 +23,49 @@ export function lisbonDate(now = new Date()) {
     day: '2-digit',
   }).format(now);
 }
-export function wholeYears(birth: string, on: string) {
-  const b = birth.split('-').map(Number),
-    d = on.split('-').map(Number);
-  return d[0] - b[0] - (d[1] < b[1] || (d[1] === b[1] && d[2] < b[2]) ? 1 : 0);
+
+export function wholeYears(birthDate: string, comparisonDate: string): number {
+  const [birthYear, birthMonth, birthDay] = birthDate.split('-').map(Number);
+  const [comparisonYear, comparisonMonth, comparisonDay] = comparisonDate.split('-').map(Number);
+  const birthdayHasPassed =
+    comparisonMonth > birthMonth || (comparisonMonth === birthMonth && comparisonDay >= birthDay);
+
+  return comparisonYear - birthYear - (birthdayHasPassed ? 0 : 1);
 }
-export function decide(c: Candidate, today: string): Decision {
-  const delta =
-    (Date.parse(c.dueDate + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 86400000;
-  if (delta < 0) return { kind: 'exhaust', reason: 'past_due' };
-  if (delta > 2) return { kind: 'skip', reason: 'outside_window' };
-  if (c.reminderStatus === 'submitted' || c.reminderStatus === 'delivered')
+
+export function decide(candidate: Candidate, today: string): Decision {
+  const millisecondsPerDay = 86_400_000;
+  const daysUntilDue =
+    (Date.parse(`${candidate.dueDate}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) /
+    millisecondsPerDay;
+
+  if (daysUntilDue < 0) {
+    return { kind: 'exhaust', reason: 'past_due' };
+  }
+  if (daysUntilDue > 2) {
+    return { kind: 'skip', reason: 'outside_window' };
+  }
+  if (candidate.reminderStatus === 'submitted' || candidate.reminderStatus === 'delivered') {
     return { kind: 'skip', reason: 'already_submitted' };
-  if (c.permanentReason) return { kind: 'skip', reason: c.permanentReason };
-  if (c.deletedAt) return { kind: 'skip', reason: 'pet_deleted' };
-  if (!c.clientSms) return { kind: 'skip', reason: 'client_opt_out' };
-  if (!c.vetSms) return { kind: 'skip', reason: 'vet_opt_out' };
-  if (!c.phone || !/^\+[1-9]\d{7,14}$/.test(c.phone))
+  }
+  if (candidate.permanentReason) {
+    return { kind: 'skip', reason: candidate.permanentReason };
+  }
+  if (candidate.deletedAt) {
+    return { kind: 'skip', reason: 'pet_deleted' };
+  }
+  if (!candidate.clientSms) {
+    return { kind: 'skip', reason: 'client_opt_out' };
+  }
+  if (!candidate.vetSms) {
+    return { kind: 'skip', reason: 'vet_opt_out' };
+  }
+  if (!candidate.phone || !/^\+[1-9]\d{7,14}$/.test(candidate.phone)) {
     return { kind: 'skip', reason: 'invalid_phone' };
-  if (wholeYears(c.birthDate, today) >= c.expiryYears)
+  }
+  if (wholeYears(candidate.birthDate, today) >= candidate.expiryYears) {
     return { kind: 'skip', reason: 'age_expired' };
+  }
+
   return { kind: 'eligible' };
 }
