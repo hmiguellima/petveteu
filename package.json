@@ -2,17 +2,22 @@
   "name": "petveteu",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.5.1",
+  "engines": {
+    "node": ">=20.18.0 <25",
+    "pnpm": ">=10 <12"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ext .js,.mjs,.ts,.tsx --max-warnings 0",
-    "lint:fix": "npm run lint -- --fix",
+    "lint:fix": "pnpm run lint --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm test"
+    "check": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm test"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

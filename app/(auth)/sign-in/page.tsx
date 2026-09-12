@@ -1,5 +1,6 @@
 import { signIn } from '../actions';
-export default function Page() {
+
+export default function Page(): React.JSX.Element {
   return (
     <section className="mx-auto mt-20 max-w-md card">
       <h1 className="mb-6 text-3xl font-bold">Entrar</h1>

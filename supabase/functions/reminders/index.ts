@@ -1,10 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { decide, lisbonDate } from './engine.ts';
+import { decide, lisbonDate, type Candidate } from './engine.ts';
+
 const texts = {
-  'pt-PT': (p: string, v: string, d: string) =>
-    `Lembrete: ${p} tem a vacina ${v} prevista para ${new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long', timeZone: 'Europe/Lisbon' }).format(new Date(d + 'T12:00:00Z'))}. Contacte a clínica veterinária.`,
-  en: (p: string, v: string, d: string) =>
-    `Reminder: ${p}'s ${v} vaccination is due on ${new Intl.DateTimeFormat('en', { dateStyle: 'long', timeZone: 'Europe/Lisbon' }).format(new Date(d + 'T12:00:00Z'))}. Please contact the veterinary clinic.`,
+  'pt-PT': (petName: string, vaccineType: string, dueDate: string) =>
+    `Lembrete: ${petName} tem a vacina ${vaccineType} prevista para ${formatDueDate('pt-PT', dueDate)}. Contacte a clínica veterinária.`,
+  en: (petName: string, vaccineType: string, dueDate: string) =>
+    `Reminder: ${petName}'s ${vaccineType} vaccination is due on ${formatDueDate('en', dueDate)}. Please contact the veterinary clinic.`,
 };
 
 type ReminderAttemptRow = { outcome: string; reason_code: string | null };
@@ -34,78 +35,126 @@ type CandidateRow = {
   pets: PetRow;
   reminders?: ReminderRow[];
 };
-Deno.serve(async (req) => {
-  const db = createClient(
+
+function formatDueDate(locale: 'pt-PT' | 'en', dueDate: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'long',
+    timeZone: 'Europe/Lisbon',
+  }).format(new Date(`${dueDate}T12:00:00Z`));
+}
+
+async function getTriggerSource(request: Request): Promise<'manual' | 'scheduled'> {
+  try {
+    const body = await request.clone().json();
+
+    return body.source === 'manual' ? 'manual' : 'scheduled';
+  } catch {
+    return 'scheduled';
+  }
+}
+
+function addDays(date: string, numberOfDays: number): string {
+  const result = new Date(`${date}T00:00:00Z`);
+  result.setUTCDate(result.getUTCDate() + numberOfDays);
+
+  return result.toISOString().slice(0, 10);
+}
+
+function findReminderForDueDate(row: CandidateRow): ReminderRow | undefined {
+  return row.reminders?.find((reminder) => reminder.due_date === row.due_date);
+}
+
+function createCandidate(row: CandidateRow, existingReminder?: ReminderRow): Candidate {
+  const pet = row.pets;
+  const profile = pet.profiles;
+  const lastAttempt = existingReminder?.reminder_attempts?.at(-1);
+
+  return {
+    entryId: row.id,
+    dueDate: row.due_date,
+    petName: pet.name,
+    birthDate: pet.date_of_birth,
+    expiryYears: pet.notification_expiry_years,
+    deletedAt: pet.deleted_at,
+    phone: profile.phone,
+    clientSms: profile.sms_enabled_by_client,
+    vetSms: profile.sms_enabled_by_vet,
+    locale: profile.locale,
+    vaccineType: row.vaccine_type,
+    reminderStatus: existingReminder?.status,
+    permanentReason: lastAttempt?.outcome === 'permanent_skip' ? lastAttempt.reason_code : null,
+  };
+}
+
+Deno.serve(async (request) => {
+  const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
   const today = lisbonDate();
-  let source = 'scheduled';
-  try {
-    source = (await req.clone().json()).source === 'manual' ? 'manual' : 'scheduled';
-  } catch {}
+  const source = await getTriggerSource(request);
+
   if (source === 'manual') {
-    const auth = req.headers.get('Authorization');
-    if (!auth) return new Response('unauthorized', { status: 401 });
-    const userDb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: auth } },
-    });
+    const authorization = request.headers.get('Authorization');
+    if (!authorization) {
+      return new Response('unauthorized', { status: 401 });
+    }
+
+    const userSupabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authorization } } },
+    );
     const {
       data: { user },
-    } = await userDb.auth.getUser();
-    const { data: p } = await db
+    } = await userSupabase.auth.getUser();
+    const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user?.id ?? '')
       .single();
-    if (p?.role !== 'vet') return new Response('forbidden', { status: 403 });
+
+    if (profile?.role !== 'vet') {
+      return new Response('forbidden', { status: 403 });
+    }
   }
-  const { data: run, error: lockError } = await db
+
+  const { data: run, error: lockError } = await supabase
     .from('reminder_job_runs')
     .insert({ business_date: today, trigger_source: source })
     .select()
     .single();
-  if (lockError) return Response.json({ skipped: 'already_running_or_succeeded' });
+  if (lockError) {
+    return Response.json({ skipped: 'already_running_or_succeeded' });
+  }
+
   try {
-    const end = new Date(today + 'T00:00:00Z');
-    end.setUTCDate(end.getUTCDate() + 2);
-    const { data: rows, error } = await db
+    const windowEndDate = addDays(today, 2);
+    const { data: rows, error } = await supabase
       .from('vaccination_entries')
       .select(
         'id,due_date,vaccine_type,pets!inner(name,date_of_birth,notification_expiry_years,deleted_at,profiles!inner(phone,locale,sms_enabled_by_client,sms_enabled_by_vet)),reminders(id,status,reminder_attempts(reason_code,outcome))',
       )
       .gte('due_date', today)
-      .lte('due_date', end.toISOString().slice(0, 10))
+      .lte('due_date', windowEndDate)
       .is('deleted_at', null);
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
+
     for (const rawRow of rows ?? []) {
       const row = rawRow as unknown as CandidateRow;
-      const pet = row.pets,
-        profile = pet.profiles,
-        existing = row.reminders?.find((reminder) => reminder.due_date === row.due_date);
-      const last = existing?.reminder_attempts?.at(-1);
-      const d = decide(
-        {
-          entryId: row.id,
-          dueDate: row.due_date,
-          petName: pet.name,
-          birthDate: pet.date_of_birth,
-          expiryYears: pet.notification_expiry_years,
-          deletedAt: pet.deleted_at,
-          phone: profile.phone,
-          clientSms: profile.sms_enabled_by_client,
-          vetSms: profile.sms_enabled_by_vet,
-          locale: profile.locale,
-          vaccineType: row.vaccine_type,
-          reminderStatus: existing?.status,
-          permanentReason: last?.outcome === 'permanent_skip' ? last.reason_code : null,
-        },
-        today,
-      );
-      if (d.reason === 'outside_window' || d.reason === 'already_submitted') continue;
-      const { data: rem } = existing
-        ? { data: existing }
-        : await db
+      const pet = row.pets;
+      const profile = pet.profiles;
+      const existingReminder = findReminderForDueDate(row);
+      const decision = decide(createCandidate(row, existingReminder), today);
+      if (decision.reason === 'outside_window' || decision.reason === 'already_submitted') {
+        continue;
+      }
+
+      const { data: reminder } = existingReminder
+        ? { data: existingReminder }
+        : await supabase
             .from('reminders')
             .upsert(
               { vaccination_entry_id: row.id, due_date: row.due_date },
@@ -113,22 +162,28 @@ Deno.serve(async (req) => {
             )
             .select()
             .single();
-      if (d.kind !== 'eligible') {
-        await db
-          .from('reminder_attempts')
-          .insert({ reminder_id: rem.id, outcome: 'permanent_skip', reason_code: d.reason });
-        await db
+      if (decision.kind !== 'eligible') {
+        await supabase.from('reminder_attempts').insert({
+          reminder_id: reminder.id,
+          outcome: 'permanent_skip',
+          reason_code: decision.reason,
+        });
+        await supabase
           .from('reminders')
-          .update({ status: d.kind === 'exhaust' ? 'exhausted' : 'permanently_skipped' })
-          .eq('id', rem.id);
+          .update({
+            status: decision.kind === 'exhaust' ? 'exhausted' : 'permanently_skipped',
+          })
+          .eq('id', reminder.id);
         continue;
       }
+
       if (Deno.env.get('SMS_DRY_RUN') !== 'false') {
-        await db
+        await supabase
           .from('reminder_attempts')
-          .insert({ reminder_id: rem.id, outcome: 'dry_run', reason_code: 'configured' });
+          .insert({ reminder_id: reminder.id, outcome: 'dry_run', reason_code: 'configured' });
         continue;
       }
+
       const body = texts[profile.locale === 'en' ? 'en' : 'pt-PT'](
         pet.name,
         row.vaccine_type,
@@ -144,33 +199,35 @@ Deno.serve(async (req) => {
         {
           method: 'POST',
           headers: {
-            Authorization:
-              'Basic ' +
-              btoa(`${Deno.env.get('TWILIO_ACCOUNT_SID')}:${Deno.env.get('TWILIO_AUTH_TOKEN')}`),
+            Authorization: `Basic ${btoa(
+              `${Deno.env.get('TWILIO_ACCOUNT_SID')}:${Deno.env.get('TWILIO_AUTH_TOKEN')}`,
+            )}`,
           },
           body: params,
         },
       );
       if (response.ok) {
-        const msg = await response.json();
-        await db
+        const message = await response.json();
+        await supabase
           .from('reminder_attempts')
-          .insert({ reminder_id: rem.id, outcome: 'submitted', provider_sid: msg.sid });
-        await db.from('reminders').update({ status: 'submitted' }).eq('id', rem.id);
-      } else
-        await db.from('reminder_attempts').insert({
-          reminder_id: rem.id,
+          .insert({ reminder_id: reminder.id, outcome: 'submitted', provider_sid: message.sid });
+        await supabase.from('reminders').update({ status: 'submitted' }).eq('id', reminder.id);
+      } else {
+        await supabase.from('reminder_attempts').insert({
+          reminder_id: reminder.id,
           outcome: 'transient_failure',
           reason_code: `twilio_${response.status}`,
         });
+      }
     }
-    await db
+
+    await supabase
       .from('reminder_job_runs')
       .update({ status: 'succeeded', completed_at: new Date().toISOString() })
       .eq('id', run.id);
     return Response.json({ ok: true, businessDate: today });
   } catch (_error) {
-    await db
+    await supabase
       .from('reminder_job_runs')
       .update({
         status: 'failed',

@@ -1,8 +1,10 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+
 type CookieWrite = { name: string; value: string; options: CookieOptions };
-export function createClient() {
+export function createClient(): ReturnType<typeof createServerClient> {
   const jar = cookies();
+
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
