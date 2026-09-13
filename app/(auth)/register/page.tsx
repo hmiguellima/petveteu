@@ -1,10 +1,26 @@
 import Link from 'next/link';
 import { register } from '../actions';
 
-export default function Page(): React.JSX.Element {
+type PageProperties = {
+  searchParams: { error?: string };
+};
+
+const errorMessages: Record<string, string> = {
+  conflict: 'Já existe uma conta com esse email ou telemóvel.',
+  invalid: 'Confirme os dados introduzidos e tente novamente.',
+};
+
+export default function Page({ searchParams }: PageProperties): React.JSX.Element {
+  const errorMessage = searchParams.error ? errorMessages[searchParams.error] : undefined;
+
   return (
     <section className="mx-auto my-12 max-w-lg card">
       <h1 className="mb-6 text-3xl font-bold">Criar conta</h1>
+      {errorMessage ? (
+        <p role="alert" className="mb-4 text-red-700">
+          {errorMessage}
+        </p>
+      ) : null}
       <form action={register}>
         <label>
           Nome completo

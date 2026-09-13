@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { portalPathForRole } from '@/lib/auth-routing';
 import { createClient } from '@/lib/supabase/server';
 import { registrationSchema } from '@/lib/validation';
 
@@ -21,7 +22,12 @@ export async function signIn(form: FormData): Promise<void> {
     .eq('id', data.user.id)
     .single();
 
-  redirect(profile?.role === 'vet' ? '/vet' : '/client');
+  if (!profile) {
+    await supabase.auth.signOut();
+    redirect('/sign-in?error=profile');
+  }
+
+  redirect(portalPathForRole(profile.role));
 }
 
 export async function register(form: FormData): Promise<void> {

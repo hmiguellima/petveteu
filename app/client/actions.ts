@@ -35,7 +35,7 @@ export async function createPet(formData: FormData): Promise<void> {
 export async function removePet(formData: FormData): Promise<void> {
   const { supabase } = await requireRole('client');
 
-  await supabase.rpc('remove_pet', {
+  await supabase.rpc('client_remove_pet', {
     p_id: formData.get('id'),
     p_version: Number(formData.get('version')),
   });
