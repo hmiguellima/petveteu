@@ -45,5 +45,13 @@ export async function requireVet(request: Request): Promise<VetContext> {
   return { admin, actor: user.id };
 }
 
+export async function resendClientInvitation(admin: SupabaseClient, email: string): Promise<void> {
+  const { error } = await admin.auth.admin.inviteUserByEmail(email);
+
+  if (error) {
+    throw new Error('invitation_resend_failed');
+  }
+}
+
 export const json = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });

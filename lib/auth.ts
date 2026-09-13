@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { redirectForRoleAccess } from '@/lib/auth-routing';
 import { createClient } from '@/lib/supabase/server';
 import type { User } from '@supabase/supabase-js';
 
@@ -34,8 +35,15 @@ export async function requireRole(role: Role): Promise<RoleContext> {
 
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 
-  if (!profile || profile.role !== role) {
-    redirect(profile?.role === 'vet' ? '/vet' : '/client');
+  if (!profile) {
+    await supabase.auth.signOut();
+    redirect('/sign-in?error=profile');
+  }
+
+  const roleRedirect = redirectForRoleAccess(profile.role, role);
+
+  if (roleRedirect) {
+    redirect(roleRedirect);
   }
 
   if (role === 'vet' && profile.mfa_required) {

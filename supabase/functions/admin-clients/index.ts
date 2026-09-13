@@ -1,31 +1,18 @@
-import { json, requireVet } from '../_shared/admin.ts';
+import { parseAdminClientInput } from '../_shared/admin-input.ts';
+import { json, requireVet, resendClientInvitation } from '../_shared/admin.ts';
 
 Deno.serve(async (request) => {
   try {
     const { admin, actor } = await requireVet(request);
-    const input = await request.json();
-
-    if ('role' in input) {
-      return json({ error: 'unsupported_field' }, 400);
-    }
-
-    const operation = String(input.operation);
-
-    if (!['invite', 'change_email', 'resend'].includes(operation)) {
-      return json({ error: 'unsupported_operation' }, 400);
-    }
-
-    const email = String(input.email ?? '')
-      .trim()
-      .toLowerCase();
+    const input = parseAdminClientInput(await request.json());
     let targetId: string | undefined;
 
-    if (operation === 'invite') {
-      const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
+    if (input.operation === 'invite') {
+      const { data, error } = await admin.auth.admin.inviteUserByEmail(input.email, {
         data: {
-          full_name: String(input.fullName ?? '').trim(),
-          phone: input.phone ?? null,
-          locale: input.locale === 'en' ? 'en' : 'pt-PT',
+          full_name: input.fullName,
+          phone: input.phone,
+          locale: input.locale,
         },
       });
 
@@ -35,7 +22,7 @@ Deno.serve(async (request) => {
 
       targetId = data.user.id;
     } else {
-      targetId = String(input.clientId);
+      targetId = input.clientId;
       const { data: profile } = await admin
         .from('profiles')
         .select('role,email')
@@ -46,33 +33,30 @@ Deno.serve(async (request) => {
         return json({ error: 'invalid_target' }, 400);
       }
 
-      if (operation === 'change_email') {
-        const { error } = await admin.auth.admin.updateUserById(targetId, { email });
+      if (input.operation === 'change_email') {
+        const { error } = await admin.auth.admin.updateUserById(targetId, { email: input.email });
 
         if (error) {
           throw error;
         }
       } else {
-        const { error } = await admin.auth.admin.generateLink({
-          type: 'invite',
-          email: profile.email,
-        });
-
-        if (error) {
-          throw error;
-        }
+        await resendClientInvitation(admin, profile.email);
       }
     }
 
-    await admin.from('admin_audit_events').insert({
+    const { error: auditError } = await admin.from('admin_audit_events').insert({
       actor_id: actor,
       target_id: targetId,
-      action: `client_${operation}`,
+      action: `client_${input.operation}`,
       details: {
-        locale: input.locale === 'en' ? 'en' : 'pt-PT',
+        ...(input.operation === 'invite' ? { locale: input.locale } : {}),
         privacy_notice_version: 'draft-v1',
       },
     });
+
+    if (auditError) {
+      throw new Error('audit_failed');
+    }
 
     return json({ ok: true, targetId });
   } catch (error) {

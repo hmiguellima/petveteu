@@ -16,6 +16,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "verify:admin": "node scripts/verify-admin-clients.mjs",
+    "verify:auth": "node scripts/verify-auth.mjs",
     "typecheck": "tsc --noEmit",
     "check": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm test"
   },
@@ -41,6 +43,7 @@
     "jsdom": "^25.0.0",
     "postcss": "^8.4.45",
     "prettier": "^3.9.6",
+    "supabase": "^2.117.0",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.6.2",
     "vitest": "^2.0.5"
