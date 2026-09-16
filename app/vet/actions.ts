@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { requireRole } from '@/lib/auth';
-import { phoneSchema, vetClientSchema, vetPetSchema } from '@/lib/validation';
+import { phoneSchema, vaccinationSchema, vetClientSchema, vetPetSchema } from '@/lib/validation';
 
 const inviteSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -46,7 +46,11 @@ function vetPath(error: unknown, success: string): string {
 
   const message =
     typeof error === 'object' && error && 'message' in error ? String(error.message) : '';
-  const code = message.includes('stale_or_forbidden') ? 'stale' : 'request';
+  const code = message.includes('stale_or_forbidden')
+    ? 'stale'
+    : message.includes('duplicate') || message.includes('unique')
+      ? 'duplicate-vaccine'
+      : 'request';
 
   return `/vet?error=${code}`;
 }
@@ -200,18 +204,50 @@ export async function removeVetPet(formData: FormData): Promise<void> {
 
 export async function saveVaccine(formData: FormData): Promise<void> {
   const { supabase } = await requireRole('vet');
+  const parsed = vaccinationSchema.safeParse({
+    id: optionalText(formData.get('id')),
+    petId: formData.get('petId'),
+    vaccineType: formData.get('type'),
+    dueDate: formData.get('due'),
+    lastAdministeredDate: optionalText(formData.get('admin')),
+    notes: optionalText(formData.get('notes')),
+    version: formData.get('version') ?? 0,
+  });
 
-  await supabase.rpc('vet_save_vaccination', {
-    p_id: null,
-    p_pet_id: formData.get('petId'),
-    p_type: formData.get('type'),
-    p_due: formData.get('due'),
-    p_admin: formData.get('admin') || null,
-    p_notes: formData.get('notes') || null,
-    p_version: 0,
+  if (!parsed.success) {
+    redirect('/vet?error=invalid-vaccine');
+  }
+
+  const { error } = await supabase.rpc('vet_save_vaccination', {
+    p_id: parsed.data.id,
+    p_pet_id: parsed.data.petId,
+    p_type: parsed.data.vaccineType,
+    p_due: parsed.data.dueDate,
+    p_admin: parsed.data.lastAdministeredDate,
+    p_notes: parsed.data.notes,
+    p_version: parsed.data.version,
   });
 
   revalidatePath('/vet');
+  redirect(vetPath(error, parsed.data.id ? 'vaccine-saved' : 'vaccine-created'));
+}
+
+export async function removeVaccine(formData: FormData): Promise<void> {
+  const { supabase } = await requireRole('vet');
+  const id = z.string().uuid().safeParse(formData.get('id'));
+  const version = z.coerce.number().int().positive().safeParse(formData.get('version'));
+
+  if (!id.success || !version.success) {
+    redirect('/vet?error=invalid-vaccine');
+  }
+
+  const { error } = await supabase.rpc('vet_remove_vaccination', {
+    p_id: id.data,
+    p_version: version.data,
+  });
+
+  revalidatePath('/vet');
+  redirect(vetPath(error, 'vaccine-removed'));
 }
 
 export async function manualRun(): Promise<void> {

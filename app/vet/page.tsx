@@ -6,6 +6,7 @@ import {
   inviteClient,
   manualRun,
   removeVetPet,
+  removeVaccine,
   resendClientInvite,
   saveVaccine,
   updateClient,
@@ -170,32 +171,36 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
                 </details>
                 <ul className="my-3">
                   {pet.vaccination_entries?.map((vaccination: VaccinationView) => (
-                    <li key={vaccination.id}>
-                      {vaccination.vaccine_type} — {vaccination.due_date}{' '}
-                      <Status reminder={vaccination.reminders?.at(-1)} />
+                    <li className="border-b py-3" key={vaccination.id}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <strong>{vaccination.vaccine_type}</strong> — {vaccination.due_date}{' '}
+                          <Status reminder={vaccination.reminders?.at(-1)} />
+                          {vaccination.last_administered_date ? (
+                            <p className="text-sm">
+                              Administrada: {vaccination.last_administered_date}
+                            </p>
+                          ) : null}
+                          {vaccination.notes ? (
+                            <p className="whitespace-pre-wrap text-sm">{vaccination.notes}</p>
+                          ) : null}
+                        </div>
+                        <form action={removeVaccine}>
+                          <input type="hidden" name="id" value={vaccination.id} />
+                          <input type="hidden" name="version" value={vaccination.version} />
+                          <button className="bg-coral">Remover vacina</button>
+                        </form>
+                      </div>
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-sm font-bold">
+                          Editar vacina
+                        </summary>
+                        <VaccinationForm petId={pet.id} vaccination={vaccination} />
+                      </details>
                     </li>
                   ))}
                 </ul>
-                <form action={saveVaccine}>
-                  <input type="hidden" name="petId" value={pet.id} />
-                  <label>
-                    Vacina
-                    <input name="type" required maxLength={120} />
-                  </label>
-                  <label>
-                    Data prevista
-                    <input name="due" required type="date" />
-                  </label>
-                  <label>
-                    Administrada
-                    <input name="admin" type="date" />
-                  </label>
-                  <label>
-                    Notas
-                    <textarea name="notes" maxLength={2000} />
-                  </label>
-                  <button>Adicionar vacina</button>
-                </form>
+                <VaccinationForm petId={pet.id} />
               </article>
             ))}
           </div>
@@ -230,7 +235,11 @@ function Feedback({
   const message = error
     ? error === 'stale'
       ? 'O registo mudou entretanto. Reveja os dados atuais.'
-      : 'Não foi possível concluir. Confirme os dados; o email e o telefone têm de ser únicos.'
+      : error === 'duplicate-vaccine'
+        ? 'Já existe uma vacina ativa com o mesmo tipo e data para este animal.'
+        : error === 'invalid-vaccine'
+          ? 'Vacina inválida. Confirme as datas, o tipo e o tamanho das notas.'
+          : 'Não foi possível concluir. Confirme os dados; o email e o telefone têm de ser únicos.'
     : 'Operação concluída.';
 
   return (
@@ -300,11 +309,47 @@ type ReminderView = {
   reminder_attempts?: Array<{ outcome: string }>;
 };
 type VaccinationView = {
+  last_administered_date: string | null;
+  notes: string | null;
   id: string;
   vaccine_type: string;
   due_date: string;
   reminders?: ReminderView[];
+  version: number;
 };
+
+function VaccinationForm({
+  petId,
+  vaccination,
+}: {
+  petId: string;
+  vaccination?: VaccinationView;
+}): React.JSX.Element {
+  return (
+    <form action={saveVaccine} className="mt-3">
+      <input type="hidden" name="petId" value={petId} />
+      <input type="hidden" name="id" value={vaccination?.id ?? ''} />
+      <input type="hidden" name="version" value={vaccination?.version ?? 0} />
+      <label>
+        Vacina
+        <input name="type" required maxLength={120} defaultValue={vaccination?.vaccine_type} />
+      </label>
+      <label>
+        Data prevista
+        <input name="due" required type="date" defaultValue={vaccination?.due_date} />
+      </label>
+      <label>
+        Administrada
+        <input name="admin" type="date" defaultValue={vaccination?.last_administered_date ?? ''} />
+      </label>
+      <label>
+        Notas
+        <textarea name="notes" maxLength={2000} defaultValue={vaccination?.notes ?? ''} />
+      </label>
+      <button>{vaccination ? 'Guardar vacina' : 'Adicionar vacina'}</button>
+    </form>
+  );
+}
 
 function Status({ reminder }: { reminder?: ReminderView }): React.JSX.Element | null {
   if (!reminder) {

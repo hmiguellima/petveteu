@@ -78,3 +78,45 @@ export const vetPetSchema = petSchema.and(
     ownerId: z.string().uuid(),
   }),
 );
+
+export const vaccinationSchema = z
+  .object({
+    id: z.string().uuid().nullable(),
+    petId: z.string().uuid(),
+    vaccineType: z.string().trim().min(1).max(120),
+    dueDate: z.string().date(),
+    lastAdministeredDate: z.string().date().nullable(),
+    notes: z.string().trim().max(2000).nullable(),
+    version: z.coerce.number().int().nonnegative(),
+  })
+  .superRefine((vaccination, context) => {
+    if (
+      (vaccination.id === null && vaccination.version !== 0) ||
+      (vaccination.id && vaccination.version < 1)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['version'],
+        message: 'invalid_version',
+      });
+    }
+
+    if (!vaccination.lastAdministeredDate) {
+      return;
+    }
+
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(
+      new Date(),
+    );
+
+    if (
+      vaccination.lastAdministeredDate > vaccination.dueDate ||
+      vaccination.lastAdministeredDate > today
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['lastAdministeredDate'],
+        message: 'invalid_administered_date',
+      });
+    }
+  });
