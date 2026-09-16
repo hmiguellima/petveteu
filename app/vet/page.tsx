@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { requireRole } from '@/lib/auth';
+import { getCatalog, type Catalog } from '@/lib/i18n';
 import {
   changeClientEmail,
   createVetPet,
@@ -12,9 +13,10 @@ import {
   updateClient,
   updateVetPet,
 } from './actions';
-import { ReminderStatus, type ReminderView } from './reminder-status';
+import { ReminderStatus, type ReminderStatusLabels, type ReminderView } from './reminder-status';
 
 type PageProps = { searchParams?: { error?: string; status?: string } };
+type RunStatus = 'failed' | 'running' | 'succeeded';
 type ClientView = {
   email: string;
   full_name: string;
@@ -45,6 +47,7 @@ type PetView = {
 // eslint-disable-next-line max-lines-per-function
 export default async function Page({ searchParams }: PageProps): Promise<React.JSX.Element> {
   const { supabase, profile } = await requireRole('vet');
+  const messages = getCatalog(profile.locale);
   const [{ data: clients }, { data: pets }, { data: runs }] = await Promise.all([
     supabase.from('profiles').select('*').eq('role', 'client').order('full_name'),
     supabase
@@ -62,39 +65,39 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
     <>
       <header className="mb-8 flex justify-between">
         <div>
-          <p className="text-sage">PetVet EU</p>
-          <h1 className="text-4xl font-bold">Área veterinária</h1>
+          <p className="text-sage">{messages.common.app}</p>
+          <h1 className="text-4xl font-bold">{messages.vet.title}</h1>
           <p>{profile.full_name}</p>
         </div>
-        <Link href="/privacy">Privacidade</Link>
+        <Link href="/privacy">{messages.common.privacy}</Link>
       </header>
-      <Feedback error={searchParams?.error} status={searchParams?.status} />
+      <Feedback error={searchParams?.error} messages={messages} status={searchParams?.status} />
       <div className="grid gap-6 lg:grid-cols-2">
         <section>
-          <h2 className="mb-3 text-2xl font-bold">Clientes</h2>
+          <h2 className="mb-3 text-2xl font-bold">{messages.vet.clients}</h2>
           <details className="card mb-3">
-            <summary className="cursor-pointer font-bold">Adicionar cliente</summary>
+            <summary className="cursor-pointer font-bold">{messages.vet.addClient}</summary>
             <form action={inviteClient} className="mt-4">
               <label>
-                Nome
+                {messages.auth.name}
                 <input required name="name" maxLength={120} />
               </label>
               <label>
-                Email
+                {messages.auth.email}
                 <input required name="email" type="email" />
               </label>
               <label>
-                Telefone
+                {messages.auth.phone}
                 <input required name="phone" type="tel" placeholder="+351912345678" />
               </label>
               <label>
-                Idioma
+                {messages.auth.language}
                 <select name="locale" defaultValue="pt-PT">
                   <option value="pt-PT">Português</option>
                   <option value="en">English</option>
                 </select>
               </label>
-              <button>Enviar convite</button>
+              <button>{messages.vet.sendInvite}</button>
             </form>
           </details>
           <div className="space-y-3">
@@ -104,19 +107,19 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
                   <input type="hidden" name="id" value={client.id} />
                   <input type="hidden" name="version" value={client.version} />
                   <label>
-                    Nome
+                    {messages.auth.name}
                     <input name="name" defaultValue={client.full_name} />
                   </label>
                   <p className="text-sm">
                     {client.email}
-                    {client.is_incomplete ? ' · contacto incompleto' : ''}
+                    {client.is_incomplete ? ` · ${messages.vet.incompleteContact}` : ''}
                   </p>
                   <label>
-                    Telefone
+                    {messages.auth.phone}
                     <input name="phone" defaultValue={client.phone ?? ''} />
                   </label>
                   <label>
-                    Idioma
+                    {messages.auth.language}
                     <select name="locale" defaultValue={client.locale}>
                       <option value="pt-PT">Português</option>
                       <option value="en">English</option>
@@ -124,42 +127,52 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
                   </label>
                   <label className="flex">
                     <input type="checkbox" name="sms" defaultChecked={client.sms_enabled_by_vet} />{' '}
-                    SMS autorizado pela clínica
+                    {messages.vet.clinicSms}
                   </label>
                   <p className="text-sm text-slate-600">
-                    Preferência do cliente: {client.sms_enabled_by_client ? 'ativa' : 'desativada'}{' '}
-                    · envio efetivo:{' '}
-                    {client.sms_enabled_by_client && client.sms_enabled_by_vet
-                      ? 'ativo'
-                      : 'bloqueado'}
+                    {messages.vet.clientPreference.replace(
+                      '{status}',
+                      client.sms_enabled_by_client ? messages.vet.enabled : messages.vet.disabled,
+                    )}{' '}
+                    ·{' '}
+                    {messages.vet.effectiveDelivery.replace(
+                      '{status}',
+                      client.sms_enabled_by_client && client.sms_enabled_by_vet
+                        ? messages.vet.active
+                        : messages.vet.blocked,
+                    )}
                   </p>
-                  <button>Guardar</button>
+                  <button>{messages.common.save}</button>
                 </form>
                 <details className="mt-4">
-                  <summary className="cursor-pointer text-sm font-bold">Acesso e email</summary>
+                  <summary className="cursor-pointer text-sm font-bold">
+                    {messages.vet.accessAndEmail}
+                  </summary>
                   <form action={changeClientEmail} className="mt-3">
                     <input type="hidden" name="id" value={client.id} />
                     <label>
-                      Novo email
+                      {messages.vet.newEmail}
                       <input required name="email" type="email" defaultValue={client.email} />
                     </label>
-                    <button>Alterar email de acesso</button>
+                    <button>{messages.vet.changeEmail}</button>
                   </form>
                   <form action={resendClientInvite} className="mt-3">
                     <input type="hidden" name="id" value={client.id} />
-                    <button>Reenviar convite</button>
+                    <button>{messages.vet.resendInvite}</button>
                   </form>
                 </details>
                 <details className="mt-4">
-                  <summary className="cursor-pointer text-sm font-bold">Adicionar animal</summary>
-                  <VetPetForm ownerId={client.id} />
+                  <summary className="cursor-pointer text-sm font-bold">
+                    {messages.vet.addPet}
+                  </summary>
+                  <VetPetForm messages={messages} ownerId={client.id} />
                 </details>
               </article>
             ))}
           </div>
         </section>
         <section>
-          <h2 className="mb-3 text-2xl font-bold">Animais e vacinas</h2>
+          <h2 className="mb-3 text-2xl font-bold">{messages.vet.petsAndVaccines}</h2>
           <div className="space-y-3">
             {pets?.map((pet: PetView) => (
               <article className="card" key={pet.id}>
@@ -168,15 +181,17 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
                   <form action={removeVetPet}>
                     <input type="hidden" name="id" value={pet.id} />
                     <input type="hidden" name="version" value={pet.version} />
-                    <button className="bg-coral">Remover</button>
+                    <button className="bg-coral">{messages.common.remove}</button>
                   </form>
                 </div>
                 <p>
-                  {pet.species} · expira aos {pet.notification_expiry_years} anos
+                  {messages.vet.petSummary
+                    .replace('{species}', messages.pet[pet.species])
+                    .replace('{years}', String(pet.notification_expiry_years))}
                 </p>
                 <details className="mt-3">
-                  <summary className="cursor-pointer font-bold">Editar animal</summary>
-                  <VetPetForm ownerId={pet.owner_id} pet={pet} />
+                  <summary className="cursor-pointer font-bold">{messages.vet.editPet}</summary>
+                  <VetPetForm messages={messages} ownerId={pet.owner_id} pet={pet} />
                 </details>
                 <ul className="my-3">
                   {pet.vaccination_entries?.map((vaccination: VaccinationView) => (
@@ -184,10 +199,13 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <strong>{vaccination.vaccine_type}</strong> — {vaccination.due_date}{' '}
-                          <ReminderStatus reminder={vaccination.reminders?.at(-1)} />
+                          <ReminderStatus
+                            labels={reminderStatusLabels(messages)}
+                            reminder={vaccination.reminders?.at(-1)}
+                          />
                           {vaccination.last_administered_date ? (
                             <p className="text-sm">
-                              Administrada: {vaccination.last_administered_date}
+                              {messages.vaccine.administered}: {vaccination.last_administered_date}
                             </p>
                           ) : null}
                           {vaccination.notes ? (
@@ -197,30 +215,34 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
                         <form action={removeVaccine}>
                           <input type="hidden" name="id" value={vaccination.id} />
                           <input type="hidden" name="version" value={vaccination.version} />
-                          <button className="bg-coral">Remover vacina</button>
+                          <button className="bg-coral">{messages.vet.removeVaccine}</button>
                         </form>
                       </div>
                       <details className="mt-2">
                         <summary className="cursor-pointer text-sm font-bold">
-                          Editar vacina
+                          {messages.vet.editVaccine}
                         </summary>
-                        <VaccinationForm petId={pet.id} vaccination={vaccination} />
+                        <VaccinationForm
+                          messages={messages}
+                          petId={pet.id}
+                          vaccination={vaccination}
+                        />
                       </details>
                     </li>
                   ))}
                 </ul>
-                <VaccinationForm petId={pet.id} />
+                <VaccinationForm messages={messages} petId={pet.id} />
               </article>
             ))}
           </div>
           <div className="card mt-4">
-            <h2 className="font-bold">Execuções</h2>
+            <h2 className="font-bold">{messages.vet.runs}</h2>
             <form action={manualRun}>
-              <button>Executar hoje</button>
+              <button>{messages.vet.runToday}</button>
             </form>
             {runs?.map((run) => (
               <p key={run.id}>
-                {run.business_date}: {run.status}
+                {run.business_date}: {runStatusLabel(messages, run.status as RunStatus)}
               </p>
             ))}
           </div>
@@ -232,9 +254,11 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
 
 function Feedback({
   error,
+  messages,
   status,
 }: {
   error?: string;
+  messages: Catalog;
   status?: string;
 }): React.JSX.Element | null {
   if (!error && !status) {
@@ -243,13 +267,13 @@ function Feedback({
 
   const message = error
     ? error === 'stale'
-      ? 'O registo mudou entretanto. Reveja os dados atuais.'
+      ? messages.validation.stale
       : error === 'duplicate-vaccine'
-        ? 'Já existe uma vacina ativa com o mesmo tipo e data para este animal.'
+        ? messages.vet.duplicateVaccine
         : error === 'invalid-vaccine'
-          ? 'Vacina inválida. Confirme as datas, o tipo e o tamanho das notas.'
-          : 'Não foi possível concluir. Confirme os dados; o email e o telefone têm de ser únicos.'
-    : 'Operação concluída.';
+          ? messages.vet.invalidVaccine
+          : messages.vet.invalid
+    : messages.vet.saved;
 
   return (
     <p className={`mb-5 rounded-lg p-3 ${error ? 'bg-red-100 text-red-900' : 'bg-green-100'}`}>
@@ -258,7 +282,15 @@ function Feedback({
   );
 }
 
-function VetPetForm({ ownerId, pet }: { ownerId: string; pet?: PetView }): React.JSX.Element {
+function VetPetForm({
+  messages,
+  ownerId,
+  pet,
+}: {
+  messages: Catalog;
+  ownerId: string;
+  pet?: PetView;
+}): React.JSX.Element {
   return (
     <form action={pet ? updateVetPet : createVetPet} className="mt-4">
       <input type="hidden" name="ownerId" value={ownerId} />
@@ -269,45 +301,45 @@ function VetPetForm({ ownerId, pet }: { ownerId: string; pet?: PetView }): React
         </>
       ) : null}
       <label>
-        Nome
+        {messages.pet.name}
         <input required name="name" maxLength={100} defaultValue={pet?.name} />
       </label>
       <label>
-        Espécie
+        {messages.pet.species}
         <select name="species" defaultValue={pet?.species ?? 'dog'}>
-          <option value="dog">Cão</option>
-          <option value="cat">Gato</option>
-          <option value="other">Outra</option>
+          <option value="dog">{messages.pet.dog}</option>
+          <option value="cat">{messages.pet.cat}</option>
+          <option value="other">{messages.pet.other}</option>
         </select>
       </label>
       <label>
-        Outra espécie
+        {messages.pet.otherSpecies}
         <input name="otherSpecies" maxLength={60} defaultValue={pet?.other_species ?? ''} />
       </label>
       <label>
-        Nascimento
+        {messages.pet.birth}
         <input required type="date" name="birth" defaultValue={pet?.date_of_birth} />
       </label>
       <label className="flex">
         <input type="checkbox" name="estimated" defaultChecked={pet?.birth_date_is_estimated} />{' '}
-        Data estimada
+        {messages.pet.estimated}
       </label>
       <label>
-        Raça
+        {messages.pet.breed}
         <input name="breed" maxLength={100} defaultValue={pet?.breed ?? ''} />
       </label>
       <label>
-        Fim dos lembretes (anos)
+        {messages.pet.expiry}
         <input
           name="expiry"
           type="number"
           min={1}
           max={50}
           defaultValue={pet?.notification_expiry_years}
-          placeholder="Padrão da espécie"
+          placeholder={messages.pet.expiryDefault}
         />
       </label>
-      <button>{pet ? 'Guardar animal' : 'Adicionar animal'}</button>
+      <button>{pet ? messages.client.savePet : messages.vet.addPet}</button>
     </form>
   );
 }
@@ -322,9 +354,11 @@ type VaccinationView = {
 };
 
 function VaccinationForm({
+  messages,
   petId,
   vaccination,
 }: {
+  messages: Catalog;
   petId: string;
   vaccination?: VaccinationView;
 }): React.JSX.Element {
@@ -334,22 +368,51 @@ function VaccinationForm({
       <input type="hidden" name="id" value={vaccination?.id ?? ''} />
       <input type="hidden" name="version" value={vaccination?.version ?? 0} />
       <label>
-        Vacina
+        {messages.vaccine.type}
         <input name="type" required maxLength={120} defaultValue={vaccination?.vaccine_type} />
       </label>
       <label>
-        Data prevista
+        {messages.vaccine.due}
         <input name="due" required type="date" defaultValue={vaccination?.due_date} />
       </label>
       <label>
-        Administrada
+        {messages.vaccine.administered}
         <input name="admin" type="date" defaultValue={vaccination?.last_administered_date ?? ''} />
       </label>
       <label>
-        Notas
+        {messages.vaccine.notes}
         <textarea name="notes" maxLength={2000} defaultValue={vaccination?.notes ?? ''} />
       </label>
-      <button>{vaccination ? 'Guardar vacina' : 'Adicionar vacina'}</button>
+      <button>{vaccination ? messages.vet.saveVaccine : messages.vet.addVaccine}</button>
     </form>
   );
+}
+
+function reminderStatusLabels(messages: Catalog): ReminderStatusLabels {
+  return {
+    attempts: {
+      dry_run: messages.vaccine.dryRun,
+      permanent_skip: messages.vaccine.permanentlySkipped,
+      submitted: messages.vaccine.submitted,
+      transient_failure: messages.vaccine.transientFailure,
+    },
+    statuses: {
+      cancelled: messages.vaccine.cancelled,
+      delivered: messages.vaccine.delivered,
+      exhausted: messages.vaccine.exhausted,
+      pending: messages.vaccine.pending,
+      permanently_skipped: messages.vaccine.permanentlySkipped,
+      submitted: messages.vaccine.submitted,
+    },
+  };
+}
+
+function runStatusLabel(messages: Catalog, status: RunStatus): string {
+  const labels: Record<RunStatus, string> = {
+    failed: messages.vet.runFailed,
+    running: messages.vet.runRunning,
+    succeeded: messages.vet.runSucceeded,
+  };
+
+  return labels[status];
 }

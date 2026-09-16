@@ -47,10 +47,37 @@
   "vet": {
     "title": "Área veterinária",
     "clients": "Clientes",
-    "addClient": "Convidar cliente",
-    "pets": "Animais",
-    "vaccines": "Vacinas",
-    "runs": "Execuções de lembretes"
+    "addClient": "Adicionar cliente",
+    "sendInvite": "Enviar convite",
+    "petsAndVaccines": "Animais e vacinas",
+    "incompleteContact": "contacto incompleto",
+    "clinicSms": "SMS autorizado pela clínica",
+    "clientPreference": "Preferência do cliente: {status}",
+    "effectiveDelivery": "envio efetivo: {status}",
+    "enabled": "ativa",
+    "disabled": "desativada",
+    "active": "ativo",
+    "blocked": "bloqueado",
+    "accessAndEmail": "Acesso e email",
+    "newEmail": "Novo email",
+    "changeEmail": "Alterar email de acesso",
+    "resendInvite": "Reenviar convite",
+    "addPet": "Adicionar animal",
+    "editPet": "Editar animal",
+    "removeVaccine": "Remover vacina",
+    "editVaccine": "Editar vacina",
+    "addVaccine": "Adicionar vacina",
+    "saveVaccine": "Guardar vacina",
+    "petSummary": "{species} · expira aos {years} anos",
+    "runs": "Execuções",
+    "runToday": "Executar hoje",
+    "runRunning": "em curso",
+    "runSucceeded": "concluída",
+    "runFailed": "falhou",
+    "saved": "Operação concluída.",
+    "duplicateVaccine": "Já existe uma vacina ativa com o mesmo tipo e data para este animal.",
+    "invalidVaccine": "Vacina inválida. Confirme as datas, o tipo e o tamanho das notas.",
+    "invalid": "Não foi possível concluir. Confirme os dados; o email e o telefone têm de ser únicos."
   },
   "pet": {
     "name": "Nome",
@@ -62,6 +89,7 @@
     "estimated": "Data estimada",
     "breed": "Raça",
     "expiry": "Idade limite dos lembretes",
+    "expiryDefault": "Padrão da espécie",
     "otherSpecies": "Outra espécie"
   },
   "vaccine": {
@@ -69,7 +97,19 @@
     "due": "Data prevista",
     "administered": "Última administração",
     "notes": "Notas",
-    "status": "Estado do lembrete"
+    "status": "Estado do lembrete",
+    "pending": "pendente",
+    "submitted": "submetido ao operador",
+    "delivered": "entregue",
+    "exhausted": "tentativas esgotadas",
+    "cancelled": "cancelado",
+    "permanentlySkipped": "ignorado permanentemente",
+    "dryRun": "simulação (não enviado)",
+    "transientFailure": "falha temporária — nova tentativa pendente"
+  },
+  "mfa": {
+    "title": "Autenticação multifator obrigatória",
+    "instructions": "Configure e valide um fator TOTP no Supabase Auth antes de aceder à área veterinária em produção."
   },
   "validation": {
     "invalid": "Não foi possível guardar. Confirme todos os campos e tente novamente.",

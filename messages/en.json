@@ -47,10 +47,37 @@
   "vet": {
     "title": "Veterinary portal",
     "clients": "Clients",
-    "addClient": "Invite client",
-    "pets": "Pets",
-    "vaccines": "Vaccines",
-    "runs": "Reminder runs"
+    "addClient": "Add client",
+    "sendInvite": "Send invitation",
+    "petsAndVaccines": "Pets and vaccines",
+    "incompleteContact": "incomplete contact details",
+    "clinicSms": "SMS authorized by the clinic",
+    "clientPreference": "Client preference: {status}",
+    "effectiveDelivery": "effective delivery: {status}",
+    "enabled": "enabled",
+    "disabled": "disabled",
+    "active": "active",
+    "blocked": "blocked",
+    "accessAndEmail": "Access and email",
+    "newEmail": "New email",
+    "changeEmail": "Change sign-in email",
+    "resendInvite": "Resend invitation",
+    "addPet": "Add pet",
+    "editPet": "Edit pet",
+    "removeVaccine": "Remove vaccine",
+    "editVaccine": "Edit vaccine",
+    "addVaccine": "Add vaccine",
+    "saveVaccine": "Save vaccine",
+    "petSummary": "{species} · reminders end at {years} years",
+    "runs": "Reminder runs",
+    "runToday": "Run today",
+    "runRunning": "running",
+    "runSucceeded": "completed",
+    "runFailed": "failed",
+    "saved": "Operation completed.",
+    "duplicateVaccine": "An active vaccine with the same type and date already exists for this pet.",
+    "invalidVaccine": "Invalid vaccine. Check the dates, type, and notes length.",
+    "invalid": "We could not complete the request. Check the details; email and phone must be unique."
   },
   "pet": {
     "name": "Name",
@@ -62,6 +89,7 @@
     "estimated": "Estimated date",
     "breed": "Breed",
     "expiry": "Reminder expiry age",
+    "expiryDefault": "Species default",
     "otherSpecies": "Other species"
   },
   "vaccine": {
@@ -69,7 +97,19 @@
     "due": "Due date",
     "administered": "Last administered",
     "notes": "Notes",
-    "status": "Reminder status"
+    "status": "Reminder status",
+    "pending": "pending",
+    "submitted": "submitted to provider",
+    "delivered": "delivered",
+    "exhausted": "attempts exhausted",
+    "cancelled": "cancelled",
+    "permanentlySkipped": "permanently skipped",
+    "dryRun": "dry run (not sent)",
+    "transientFailure": "temporary failure — retry pending"
+  },
+  "mfa": {
+    "title": "Multi-factor authentication required",
+    "instructions": "Configure and verify a TOTP factor in Supabase Auth before accessing the veterinary portal in production."
   },
   "validation": {
     "invalid": "We could not save the changes. Check every field and try again."

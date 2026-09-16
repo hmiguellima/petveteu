@@ -11,20 +11,9 @@ export type ReminderView = {
   status: 'cancelled' | 'delivered' | 'exhausted' | 'pending' | 'permanently_skipped' | 'submitted';
 };
 
-const statusLabels: Record<ReminderView['status'], string> = {
-  pending: 'pendente',
-  submitted: 'submetido ao operador',
-  delivered: 'entregue',
-  exhausted: 'tentativas esgotadas',
-  cancelled: 'cancelado',
-  permanently_skipped: 'ignorado permanentemente',
-};
-
-const attemptLabels: Record<AttemptView['outcome'], string> = {
-  dry_run: 'simulação (não enviado)',
-  submitted: 'submetido ao operador',
-  transient_failure: 'falha temporária — nova tentativa pendente',
-  permanent_skip: 'ignorado permanentemente',
+export type ReminderStatusLabels = {
+  attempts: Record<AttemptView['outcome'], string>;
+  statuses: Record<ReminderView['status'], string>;
 };
 
 export function latestAttempt(attempts: AttemptView[] = []): AttemptView | undefined {
@@ -32,8 +21,10 @@ export function latestAttempt(attempts: AttemptView[] = []): AttemptView | undef
 }
 
 export function ReminderStatus({
+  labels,
   reminder,
 }: {
+  labels: ReminderStatusLabels;
   reminder?: ReminderView;
 }): React.JSX.Element | null {
   if (!reminder) {
@@ -41,7 +32,7 @@ export function ReminderStatus({
   }
 
   const attempt = latestAttempt(reminder.reminder_attempts);
-  const label = attempt ? attemptLabels[attempt.outcome] : statusLabels[reminder.status];
+  const label = attempt ? labels.attempts[attempt.outcome] : labels.statuses[reminder.status];
 
   return (
     <small className="ml-2 rounded bg-slate-100 px-2 py-1">

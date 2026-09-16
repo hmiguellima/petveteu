@@ -19,4 +19,10 @@ describe('catalogs', () => {
       "Reminder: Lua's Rabies vaccination is due on September 12, 2026. Please contact the veterinary clinic.",
     );
   });
+  it('covers vet and MFA surfaces in both locales', () => {
+    expect(getCatalog('pt-PT').vet.runToday).toBe('Executar hoje');
+    expect(getCatalog('en').vet.runToday).toBe('Run today');
+    expect(getCatalog('pt-PT').mfa.title).toBe('Autenticação multifator obrigatória');
+    expect(getCatalog('en').mfa.title).toBe('Multi-factor authentication required');
+  });
 });
