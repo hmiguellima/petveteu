@@ -47,10 +47,10 @@ Cross-stream rule: DB owns persistent shapes and authorization contracts. Web an
 
 ## 4. Client and pet registry
 
-- [ ] 4.1 **[Web]** Implement client profile/contact, locale, and client SMS-setting views and mutations with normalization, validation, incomplete-record behavior, and optimistic concurrency feedback. **Depends on:** 3.1, 3.2, 2.6. **Concurrent with:** 4.2, 4.3, 4.4.
-- [ ] 4.2 **[Web]** Implement client list/add/update/remove for owned pets with estimated DOB and optional other-species support; verify immutable ownership, deleted-pet rejection, expiry read-only behavior, stale-update feedback, and cross-client denial. **Depends on:** 3.1, 3.2, 2.6. **Concurrent with:** 4.1, 4.3, 4.4.
-- [ ] 4.3 **[Web]** Implement vet list/create/update of clients through protected administrative functions and invite flows; verify mirrored email display and synchronization, later sign-in, safe conflicts, and rejection of unauthorized administrative calls. **Depends on:** 3.2, 3.3. **Concurrent with:** 4.1, 4.2, 4.4.
-- [ ] 4.4 **[Web]** Implement vet add/update/remove of pets for any client, including estimated DOB, species detail, and expiry age 1–50; verify defaults, intentional expiry at or below current age, soft deletion, and stale-update rejection. **Depends on:** 3.2, 2.6. **Concurrent with:** 4.1, 4.2, 4.3.
+- [x] 4.1 **[Web]** Implement client profile/contact, locale, and client SMS-setting views and mutations with normalization, validation, incomplete-record behavior, and optimistic concurrency feedback. **Depends on:** 3.1, 3.2, 2.6. **Concurrent with:** 4.2, 4.3, 4.4.
+- [x] 4.2 **[Web]** Implement client list/add/update/remove for owned pets with estimated DOB and optional other-species support; verify immutable ownership, deleted-pet rejection, expiry read-only behavior, stale-update feedback, and cross-client denial. **Depends on:** 3.1, 3.2, 2.6. **Concurrent with:** 4.1, 4.3, 4.4.
+- [x] 4.3 **[Web]** Implement vet list/create/update of clients through protected administrative functions and invite flows; verify mirrored email display and synchronization, later sign-in, safe conflicts, and rejection of unauthorized administrative calls. **Depends on:** 3.2, 3.3. **Concurrent with:** 4.1, 4.2, 4.4.
+- [x] 4.4 **[Web]** Implement vet add/update/remove of pets for any client, including estimated DOB, species detail, and expiry age 1–50; verify defaults, intentional expiry at or below current age, soft deletion, and stale-update rejection. **Depends on:** 3.2, 2.6. **Concurrent with:** 4.1, 4.2, 4.3.
 
 ## 5. Vaccination schedules
 

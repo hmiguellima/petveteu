@@ -6,8 +6,10 @@ import type { User } from '@supabase/supabase-js';
 export type Role = 'client' | 'vet';
 
 type Profile = {
+  email: string;
   full_name: string;
   id: string;
+  is_incomplete: boolean;
   locale: 'pt-PT' | 'en';
   mfa_required: boolean;
   phone: string | null;
