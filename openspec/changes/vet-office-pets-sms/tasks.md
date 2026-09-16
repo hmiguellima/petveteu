@@ -69,7 +69,7 @@ Cross-stream rule: DB owns persistent shapes and authorization contracts. Web an
 
 ## 7. Internationalization and copy
 
-- [ ] 7.1 **[Readiness/Web]** Establish complete `pt-PT` and `en` catalog structure and progressively cover registration, portals, validation, privacy, and SMS copy with Portuguese fallback; verify locale switching and missing-English-key fallback. **Depends on:** 1.2; starts in phase 3 and completes after all user-visible surfaces.
+- [x] 7.1 **[Readiness/Web]** Establish complete `pt-PT` and `en` catalog structure and progressively cover registration, portals, validation, privacy, and SMS copy with Portuguese fallback; verify locale switching and missing-English-key fallback. **Depends on:** 1.2; starts in phase 3 and completes after all user-visible surfaces.
 - [x] 7.2 **[Jobs/Readiness]** Render reminder SMS from the shared catalogs using the client's saved locale; verify Portuguese and English messages include pet name, vaccine type, and localized due date. **Depends on:** 6.1 and the SMS namespace from 7.1. **Concurrent with:** 5.2, 5.3, 6.3.
 
 ## 8. Data protection and production readiness
