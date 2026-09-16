@@ -55,7 +55,7 @@ Cross-stream rule: DB owns persistent shapes and authorization contracts. Web an
 ## 5. Vaccination schedules
 
 - [x] 5.1 **[Web/DB]** Implement vet CRUD for validated vaccination entries with bounded plain text, historical due dates, administered-date ordering, exact-active-duplicate prevention, and optimistic concurrency; verify stale edits fail and a due-date change cancels an old pending reminder while preserving submitted history. **Depends on:** 2.6, 3.2; use seeded pets until 4.4 completes.
-- [ ] 5.2 **[Web]** Implement the client read-only schedule for owned pets without edit controls; verify UI and database rejection of client writes and cross-owner reads. **Depends on:** 4.2, 5.1. **Concurrent with:** 5.3 and section 6 integration.
+- [x] 5.2 **[Web]** Implement the client read-only schedule for owned pets without edit controls; verify UI and database rejection of client writes and cross-owner reads. **Depends on:** 4.2, 5.1. **Concurrent with:** 5.3 and section 6 integration.
 - [ ] 5.3 **[Web]** Show reminder lifecycle and latest attempt in the vet pet/schedule view; verify dry-run, submitted, exhausted, failed, and permanently skipped outcomes render without presenting dry runs as sent. **Depends on:** 5.1, 6.1; final verification depends on 6.2. **Concurrent with:** 5.2, 6.3, 7.2.
 
 ## 6. SMS reminders

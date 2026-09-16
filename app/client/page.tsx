@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { requireRole } from '@/lib/auth';
 import { createPet, removePet, updatePet, updateProfile } from './actions';
+import { ReadOnlySchedule, type ClientVaccinationView } from './read-only-schedule';
 
 type PageProps = {
   searchParams?: { error?: string; status?: string };
@@ -15,7 +16,7 @@ type PetView = {
   notification_expiry_years: number;
   other_species: string | null;
   species: 'cat' | 'dog' | 'other';
-  vaccination_entries?: Array<{ due_date: string; id: string; vaccine_type: string }>;
+  vaccination_entries?: ClientVaccinationView[];
   version: number;
 };
 
@@ -23,7 +24,8 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
   const { supabase, profile } = await requireRole('client');
   const { data: pets } = await supabase
     .from('pets')
-    .select('*,vaccination_entries(*,reminders(*,reminder_attempts(*)))')
+    .select('*,vaccination_entries(id,vaccine_type,due_date)')
+    .eq('owner_id', profile.id)
     .order('name');
 
   return (
@@ -90,20 +92,7 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
                 <summary className="cursor-pointer font-bold">Editar dados</summary>
                 <PetForm pet={pet} />
               </details>
-              <h3 className="mt-5 font-bold">Vacinas</h3>
-              {pet.vaccination_entries?.length ? (
-                <ul>
-                  {pet.vaccination_entries.map(
-                    (vaccination: { id: string; vaccine_type: string; due_date: string }) => (
-                      <li className="border-b py-2" key={vaccination.id}>
-                        <strong>{vaccination.vaccine_type}</strong> — {vaccination.due_date}
-                      </li>
-                    ),
-                  )}
-                </ul>
-              ) : (
-                <p className="text-slate-500">Sem vacinas registadas.</p>
-              )}
+              <ReadOnlySchedule vaccinations={pet.vaccination_entries} />
             </article>
           ))}
         </section>
