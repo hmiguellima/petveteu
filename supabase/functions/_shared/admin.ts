@@ -36,10 +36,22 @@ export async function requireVet(request: Request): Promise<VetContext> {
     throw new Error('unauthorized');
   }
 
-  const { data } = await admin.from('profiles').select('role').eq('id', user.id).single();
+  const { data } = await admin
+    .from('profiles')
+    .select('role,mfa_required')
+    .eq('id', user.id)
+    .single();
 
   if (data?.role !== 'vet') {
     throw new Error('forbidden');
+  }
+
+  if (data.mfa_required) {
+    const { data: assurance, error } = await caller.auth.mfa.getAuthenticatorAssuranceLevel();
+
+    if (error || assurance.currentLevel !== 'aal2') {
+      throw new Error('forbidden');
+    }
   }
 
   return { admin, actor: user.id };

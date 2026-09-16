@@ -109,7 +109,14 @@
   },
   "mfa": {
     "title": "Autenticação multifator obrigatória",
-    "instructions": "Configure e valide um fator TOTP no Supabase Auth antes de aceder à área veterinária em produção."
+    "instructions": "Use uma aplicação autenticadora para proteger a área veterinária.",
+    "preparing": "A preparar a autenticação multifator…",
+    "enroll": "Leia o código QR com a sua aplicação autenticadora.",
+    "scan": "Código QR para configurar a autenticação multifator",
+    "manualSecret": "Chave para configuração manual",
+    "code": "Código de seis dígitos",
+    "verify": "Validar e continuar",
+    "error": "Não foi possível validar o código. Confirme-o e tente novamente."
   },
   "validation": {
     "invalid": "Não foi possível guardar. Confirme todos os campos e tente novamente.",

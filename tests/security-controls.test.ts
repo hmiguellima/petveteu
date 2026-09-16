@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { vetMfaRequirementIsSatisfied } from '@/lib/mfa';
 import { createStructuredLogRecord } from '@/lib/security-logging';
@@ -11,6 +12,17 @@ describe('vet MFA gate', () => {
 
   it('does not impose MFA when the profile policy is disabled', () => {
     expect(vetMfaRequirementIsSatisfied(false, 'aal1')).toBe(true);
+  });
+
+  it('enforces AAL2 at the shared database authorization boundary', () => {
+    const migration = readFileSync(
+      'supabase/migrations/202609160003_vet_mfa_enforcement.sql',
+      'utf8',
+    );
+
+    expect(migration).toContain("auth.jwt() ->> 'aal'");
+    expect(migration).toContain('not mfa_required');
+    expect(migration).toContain("= 'aal2'");
   });
 });
 

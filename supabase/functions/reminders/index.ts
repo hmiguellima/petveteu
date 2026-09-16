@@ -110,11 +110,21 @@ async function authorizeVet(
   } = await userSupabase.auth.getUser();
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role,mfa_required')
     .eq('id', user?.id ?? '')
     .single();
 
-  return profile?.role === 'vet';
+  if (profile?.role !== 'vet') {
+    return false;
+  }
+
+  if (!profile.mfa_required) {
+    return true;
+  }
+
+  const { data: assurance, error } = await userSupabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+  return !error && assurance.currentLevel === 'aal2';
 }
 
 async function sendAlert(businessDate: string, health: 'failed' | 'missing'): Promise<void> {

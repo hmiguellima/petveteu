@@ -109,7 +109,14 @@
   },
   "mfa": {
     "title": "Multi-factor authentication required",
-    "instructions": "Configure and verify a TOTP factor in Supabase Auth before accessing the veterinary portal in production."
+    "instructions": "Use an authenticator app to protect the veterinary portal.",
+    "preparing": "Preparing multi-factor authentication…",
+    "enroll": "Scan the QR code with your authenticator app.",
+    "scan": "QR code for multi-factor authentication setup",
+    "manualSecret": "Manual setup key",
+    "code": "Six-digit code",
+    "verify": "Verify and continue",
+    "error": "The code could not be verified. Check it and try again."
   },
   "validation": {
     "invalid": "We could not save the changes. Check every field and try again."

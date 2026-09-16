@@ -11,6 +11,16 @@
 
 Application logs must use the allowlisted structured logger: timestamp, severity, event code, correlation ID, and non-identifying error code. Never log SMS text, authorization/cookie headers, session tokens, credentials, names, emails, phone numbers, pet names, or raw database rows. Configure provider log retention to the approved period.
 
+Before enabling the production MFA policy:
+
+1. Deploy the MFA page, Edge Function checks, and database migration.
+2. Ask the vet to sign in, open `/mfa`, scan the TOTP QR code, and verify a current six-digit code.
+3. Confirm the vet can reach `/vet` with an AAL2 session and record non-sensitive dated evidence.
+4. Set that vet's `profiles.mfa_required` value to `true` in the Supabase SQL editor.
+5. Confirm a fresh AAL1 session is denied by the portal, vet Edge Functions, and vet database policies, then confirm AAL2 succeeds.
+
+For recovery, an authorized operator verifies the vet's identity through the approved channel, removes the unusable factor in Supabase Auth, leaves `mfa_required` enabled, and has the vet enroll a replacement at `/mfa`. Record the operator, date, and outcome without recording the TOTP secret, recovery conversation, or session data.
+
 Alerts must cover failed reminder runs, absence of a successful run for the expected Lisbon business date, authentication anomalies, and provider/security notifications. Every alert has a named on-call owner and an exercised escalation route.
 
 ## Backups and restoration

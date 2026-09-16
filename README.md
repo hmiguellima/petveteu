@@ -13,7 +13,7 @@ Requirements: Node 20+, pnpm 10 or 11, Docker, and the Supabase CLI.
 
 ## Vet bootstrap
 
-There is no UI or authenticated API for creating vets. Set `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `BOOTSTRAP_VET_EMAIL`, and a strong `BOOTSTRAP_VET_PASSWORD` only in an operator shell, then run `node scripts/bootstrap-vet.mjs`. The partial unique database index rejects a second vet. Remove the bootstrap values afterward and enroll the vet in TOTP MFA.
+There is no UI or authenticated API for creating vets. Set `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `BOOTSTRAP_VET_EMAIL`, and a strong `BOOTSTRAP_VET_PASSWORD` only in an operator shell, then run `node scripts/bootstrap-vet.mjs`. The partial unique database index rejects a second vet. Remove the bootstrap values afterward, have the vet enroll and verify TOTP at `/mfa`, and follow the MFA activation and recovery procedure in [docs/security-operations.md](docs/security-operations.md).
 
 ## Edge Functions and Twilio
 
