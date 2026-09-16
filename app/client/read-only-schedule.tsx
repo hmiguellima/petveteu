@@ -8,12 +8,24 @@ export type ClientVaccinationView = {
 
 type ReadOnlyScheduleProps = {
   vaccinations?: ClientVaccinationView[];
+  labels?: {
+    empty: string;
+    schedule: string;
+    vaccines: string;
+  };
 };
 
-export function ReadOnlySchedule({ vaccinations }: ReadOnlyScheduleProps): React.JSX.Element {
+export function ReadOnlySchedule({
+  labels = {
+    empty: 'Sem vacinas registadas.',
+    schedule: 'Calendário de vacinação',
+    vaccines: 'Vacinas',
+  },
+  vaccinations,
+}: ReadOnlyScheduleProps): React.JSX.Element {
   return (
-    <section aria-label="Calendário de vacinação" className="mt-5">
-      <h3 className="font-bold">Vacinas</h3>
+    <section aria-label={labels.schedule} className="mt-5">
+      <h3 className="font-bold">{labels.vaccines}</h3>
       {vaccinations?.length ? (
         <ul>
           {vaccinations.map((vaccination) => (
@@ -23,7 +35,7 @@ export function ReadOnlySchedule({ vaccinations }: ReadOnlyScheduleProps): React
           ))}
         </ul>
       ) : (
-        <p className="text-slate-500">Sem vacinas registadas.</p>
+        <p className="text-slate-500">{labels.empty}</p>
       )}
     </section>
   );

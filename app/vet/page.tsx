@@ -12,6 +12,7 @@ import {
   updateClient,
   updateVetPet,
 } from './actions';
+import { ReminderStatus, type ReminderView } from './reminder-status';
 
 type PageProps = { searchParams?: { error?: string; status?: string } };
 type ClientView = {
@@ -21,6 +22,7 @@ type ClientView = {
   is_incomplete: boolean;
   locale: 'en' | 'pt-PT';
   phone: string | null;
+  sms_enabled_by_client: boolean;
   sms_enabled_by_vet: boolean;
   version: number;
 };
@@ -124,6 +126,13 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
                     <input type="checkbox" name="sms" defaultChecked={client.sms_enabled_by_vet} />{' '}
                     SMS autorizado pela clínica
                   </label>
+                  <p className="text-sm text-slate-600">
+                    Preferência do cliente: {client.sms_enabled_by_client ? 'ativa' : 'desativada'}{' '}
+                    · envio efetivo:{' '}
+                    {client.sms_enabled_by_client && client.sms_enabled_by_vet
+                      ? 'ativo'
+                      : 'bloqueado'}
+                  </p>
                   <button>Guardar</button>
                 </form>
                 <details className="mt-4">
@@ -175,7 +184,7 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <strong>{vaccination.vaccine_type}</strong> — {vaccination.due_date}{' '}
-                          <Status reminder={vaccination.reminders?.at(-1)} />
+                          <ReminderStatus reminder={vaccination.reminders?.at(-1)} />
                           {vaccination.last_administered_date ? (
                             <p className="text-sm">
                               Administrada: {vaccination.last_administered_date}
@@ -302,12 +311,6 @@ function VetPetForm({ ownerId, pet }: { ownerId: string; pet?: PetView }): React
     </form>
   );
 }
-type ReminderStatus =
-  'pending' | 'submitted' | 'delivered' | 'exhausted' | 'cancelled' | 'permanently_skipped';
-type ReminderView = {
-  status: ReminderStatus;
-  reminder_attempts?: Array<{ outcome: string }>;
-};
 type VaccinationView = {
   last_administered_date: string | null;
   notes: string | null;
@@ -348,26 +351,5 @@ function VaccinationForm({
       </label>
       <button>{vaccination ? 'Guardar vacina' : 'Adicionar vacina'}</button>
     </form>
-  );
-}
-
-function Status({ reminder }: { reminder?: ReminderView }): React.JSX.Element | null {
-  if (!reminder) {
-    return null;
-  }
-  const last = reminder.reminder_attempts?.at(-1);
-  const labels: Record<ReminderStatus, string> = {
-    pending: 'pendente',
-    submitted: 'submetido',
-    delivered: 'entregue',
-    exhausted: 'esgotado',
-    cancelled: 'cancelado',
-    permanently_skipped: 'ignorado permanentemente',
-  };
-
-  return (
-    <small className="ml-2 rounded bg-slate-100 px-2 py-1">
-      {last?.outcome === 'dry_run' ? 'simulação (não enviado)' : labels[reminder.status]}
-    </small>
   );
 }

@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { portalPathForRole } from '@/lib/auth-routing';
 import { createClient } from '@/lib/supabase/server';
 import { registrationSchema } from '@/lib/validation';
@@ -18,7 +19,7 @@ export async function signIn(form: FormData): Promise<void> {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, locale')
     .eq('id', data.user.id)
     .single();
 
@@ -26,6 +27,8 @@ export async function signIn(form: FormData): Promise<void> {
     await supabase.auth.signOut();
     redirect('/sign-in?error=profile');
   }
+
+  cookies().set('locale', profile.locale, { sameSite: 'lax', path: '/' });
 
   redirect(portalPathForRole(profile.role));
 }
@@ -60,6 +63,7 @@ export async function register(form: FormData): Promise<void> {
     redirect('/register?error=conflict');
   }
   if (data.session) {
+    cookies().set('locale', parsed.data.locale, { sameSite: 'lax', path: '/' });
     redirect('/client');
   }
 

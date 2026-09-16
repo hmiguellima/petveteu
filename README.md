@@ -31,6 +31,8 @@ The privacy page is deliberately marked as an unapproved draft. Complete every i
 
 Clinic-assisted rights requests are recorded in `data_subject_requests`; use the documented workflow to verify identity, export/correct/restrict data, record a minimal outcome, cancel future reminders on erasure, and honor only a documented continuing retention basis.
 
+The operational details are in the [rights runbook](docs/data-subject-rights-runbook.md), [security and incident runbook](docs/security-operations.md), and [decision record](docs/data-protection-decisions.md). The database exposes authenticated vet-only request functions and an operator-only `apply_approved_retention` function. Supply its four cutoffs only from the approved schedule; do not schedule it while the decision record contains `TBD` values. Backups and provider diagnostic logs are configured and disposed in their provider consoles, then evidenced in the production gate.
+
 ## Verification
 
 - Database security checks: [docs/database-verification.sql](docs/database-verification.sql)

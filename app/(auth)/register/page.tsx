@@ -1,21 +1,20 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { register } from '../actions';
 
 type PageProperties = {
   searchParams: { error?: string };
 };
 
-const errorMessages: Record<string, string> = {
-  conflict: 'Já existe uma conta com esse email ou telemóvel.',
-  invalid: 'Confirme os dados introduzidos e tente novamente.',
-};
-
-export default function Page({ searchParams }: PageProperties): React.JSX.Element {
-  const errorMessage = searchParams.error ? errorMessages[searchParams.error] : undefined;
+export default async function Page({ searchParams }: PageProperties): Promise<React.JSX.Element> {
+  const translations = await getTranslations();
+  const errorMessage = searchParams.error
+    ? translations(searchParams.error === 'conflict' ? 'auth.conflict' : 'auth.invalid')
+    : undefined;
 
   return (
     <section className="mx-auto my-12 max-w-lg card">
-      <h1 className="mb-6 text-3xl font-bold">Criar conta</h1>
+      <h1 className="mb-6 text-3xl font-bold">{translations('auth.register')}</h1>
       {errorMessage ? (
         <p role="alert" className="mb-4 text-red-700">
           {errorMessage}
@@ -23,36 +22,36 @@ export default function Page({ searchParams }: PageProperties): React.JSX.Elemen
       ) : null}
       <form action={register}>
         <label>
-          Nome completo
+          {translations('auth.name')}
           <input required name="fullName" maxLength={120} />
         </label>
         <label>
-          Email
+          {translations('auth.email')}
           <input required type="email" name="email" />
         </label>
         <label>
-          Telemóvel E.164
+          {translations('auth.phone')}
           <input required name="phone" placeholder="+351912345678" />
         </label>
         <label>
-          Palavra-passe
+          {translations('auth.password')}
           <input required minLength={10} type="password" name="password" />
         </label>
         <label>
-          Idioma
+          {translations('auth.language')}
           <select name="locale">
             <option value="pt-PT">Português</option>
             <option value="en">English</option>
           </select>
         </label>
         <p className="text-sm">
-          Ao criar uma conta, confirma que consultou o{' '}
+          {translations('auth.privacyPrefix')}{' '}
           <Link className="underline" href="/privacy">
-            aviso de privacidade
+            {translations('auth.privacyLink')}
           </Link>
           .
         </p>
-        <button>Criar conta</button>
+        <button>{translations('auth.register')}</button>
       </form>
     </section>
   );

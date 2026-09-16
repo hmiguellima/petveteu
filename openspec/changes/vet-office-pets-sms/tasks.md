@@ -56,21 +56,21 @@ Cross-stream rule: DB owns persistent shapes and authorization contracts. Web an
 
 - [x] 5.1 **[Web/DB]** Implement vet CRUD for validated vaccination entries with bounded plain text, historical due dates, administered-date ordering, exact-active-duplicate prevention, and optimistic concurrency; verify stale edits fail and a due-date change cancels an old pending reminder while preserving submitted history. **Depends on:** 2.6, 3.2; use seeded pets until 4.4 completes.
 - [x] 5.2 **[Web]** Implement the client read-only schedule for owned pets without edit controls; verify UI and database rejection of client writes and cross-owner reads. **Depends on:** 4.2, 5.1. **Concurrent with:** 5.3 and section 6 integration.
-- [ ] 5.3 **[Web]** Show reminder lifecycle and latest attempt in the vet pet/schedule view; verify dry-run, submitted, exhausted, failed, and permanently skipped outcomes render without presenting dry runs as sent. **Depends on:** 5.1, 6.1; final verification depends on 6.2. **Concurrent with:** 5.2, 6.3, 7.2.
+- [x] 5.3 **[Web]** Show reminder lifecycle and latest attempt in the vet pet/schedule view; verify dry-run, submitted, exhausted, failed, and permanently skipped outcomes render without presenting dry runs as sent. **Depends on:** 5.1, 6.1; final verification depends on 6.2. **Concurrent with:** 5.2, 6.3, 7.2.
 
 ## 6. SMS reminders
 
 - [x] 6.1 **[Jobs]** Implement the testable reminder eligibility and lifecycle engine using Europe/Lisbon, due dates in 0–2 days, both SMS flags, pet age/expiry, deletion, successful-submission deduplication, due-date changes, concurrency, transient retries through the due date, permanent skips, and exhaustion afterward. **Depends on:** 2.2, 2.3; may use fixtures before portal completion. **Concurrent with:** 3.x and 7.1.
-- [ ] 6.2 **[Jobs]** Integrate Twilio submission and `SMS_DRY_RUN`; persist every attempt; verify dry-run has no SID and leaves the reminder pending, successful submission stores its SID, transient failure remains retryable, invalid phone is permanently skipped, and automated tests never call Twilio. **Depends on:** 6.1. **Coordinate with:** 7.2.
-- [ ] 6.3 **[Web/Jobs]** Complete client and vet SMS toggles, both default-on, and connect them to eligibility processing; verify either disabled flag prevents submission. **Depends on:** 4.1, 4.3, 6.1. **Concurrent with:** 5.2, 5.3, 7.2.
-- [ ] 6.4 **[Jobs]** Configure daily 08:00 UTC scheduling, Lisbon business-date calculation, job-run persistence, and locking against overlapping or duplicate successful batches. **Depends on:** 6.1, 6.2, 2.3.
-- [ ] 6.5 **[Jobs/Readiness]** Add missing/failed-run alerting and a protected current-Lisbon-date manual rerun; verify failed runs are visible and authorized reruns cannot overlap successful processing. **Depends on:** 6.4, 3.2.
-- [ ] 6.6 **[Jobs]** Verify scheduled and manual processing across Lisbon standard time, daylight-saving time, date boundaries, concurrent invocations, and missed/failed run recovery. **Depends on:** 6.4, 6.5.
+- [x] 6.2 **[Jobs]** Integrate Twilio submission and `SMS_DRY_RUN`; persist every attempt; verify dry-run has no SID and leaves the reminder pending, successful submission stores its SID, transient failure remains retryable, invalid phone is permanently skipped, and automated tests never call Twilio. **Depends on:** 6.1. **Coordinate with:** 7.2.
+- [x] 6.3 **[Web/Jobs]** Complete client and vet SMS toggles, both default-on, and connect them to eligibility processing; verify either disabled flag prevents submission. **Depends on:** 4.1, 4.3, 6.1. **Concurrent with:** 5.2, 5.3, 7.2.
+- [x] 6.4 **[Jobs]** Configure daily 08:00 UTC scheduling, Lisbon business-date calculation, job-run persistence, and locking against overlapping or duplicate successful batches. **Depends on:** 6.1, 6.2, 2.3.
+- [x] 6.5 **[Jobs/Readiness]** Add missing/failed-run alerting and a protected current-Lisbon-date manual rerun; verify failed runs are visible and authorized reruns cannot overlap successful processing. **Depends on:** 6.4, 3.2.
+- [x] 6.6 **[Jobs]** Verify scheduled and manual processing across Lisbon standard time, daylight-saving time, date boundaries, concurrent invocations, and missed/failed run recovery. **Depends on:** 6.4, 6.5.
 
 ## 7. Internationalization and copy
 
 - [ ] 7.1 **[Readiness/Web]** Establish complete `pt-PT` and `en` catalog structure and progressively cover registration, portals, validation, privacy, and SMS copy with Portuguese fallback; verify locale switching and missing-English-key fallback. **Depends on:** 1.2; starts in phase 3 and completes after all user-visible surfaces.
-- [ ] 7.2 **[Jobs/Readiness]** Render reminder SMS from the shared catalogs using the client's saved locale; verify Portuguese and English messages include pet name, vaccine type, and localized due date. **Depends on:** 6.1 and the SMS namespace from 7.1. **Concurrent with:** 5.2, 5.3, 6.3.
+- [x] 7.2 **[Jobs/Readiness]** Render reminder SMS from the shared catalogs using the client's saved locale; verify Portuguese and English messages include pet name, vaccine type, and localized due date. **Depends on:** 6.1 and the SMS namespace from 7.1. **Concurrent with:** 5.2, 5.3, 6.3.
 
 ## 8. Data protection and production readiness
 

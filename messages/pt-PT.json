@@ -18,14 +18,31 @@
     "email": "Email",
     "phone": "Telemóvel (+351…)",
     "password": "Palavra-passe",
-    "error": "Não foi possível concluir. Verifique os dados."
+    "error": "Não foi possível concluir. Verifique os dados.",
+    "language": "Idioma",
+    "invalid": "Confirme os dados introduzidos e tente novamente.",
+    "conflict": "Já existe uma conta com esse email ou telemóvel.",
+    "credentials": "Email ou palavra-passe incorretos.",
+    "profileError": "Não foi possível carregar o perfil da conta.",
+    "registered": "Conta criada. Confirme o email, se solicitado, e inicie sessão.",
+    "privacyPrefix": "Ao criar uma conta, confirma que consultou o",
+    "privacyLink": "aviso de privacidade"
   },
   "client": {
     "title": "Os meus animais",
     "profile": "O meu perfil",
     "addPet": "Adicionar animal",
     "schedule": "Vacinas",
-    "sms": "Receber lembretes SMS"
+    "sms": "Receber lembretes SMS",
+    "hello": "Olá, {name}",
+    "accessEmail": "Email de acesso: {email}",
+    "completeContact": "complete o contacto para ativar os lembretes",
+    "editPet": "Editar dados",
+    "savePet": "Guardar animal",
+    "saved": "Alterações guardadas.",
+    "noVaccines": "Sem vacinas registadas.",
+    "scheduleLabel": "Calendário de vacinação",
+    "expirySentence": "A clínica definiu o fim dos lembretes aos {years} anos."
   },
   "vet": {
     "title": "Área veterinária",
@@ -44,7 +61,8 @@
     "birth": "Data de nascimento",
     "estimated": "Data estimada",
     "breed": "Raça",
-    "expiry": "Idade limite dos lembretes"
+    "expiry": "Idade limite dos lembretes",
+    "otherSpecies": "Outra espécie"
   },
   "vaccine": {
     "type": "Vacina",
@@ -53,10 +71,17 @@
     "notes": "Notas",
     "status": "Estado do lembrete"
   },
+  "validation": {
+    "invalid": "Não foi possível guardar. Confirme todos os campos e tente novamente.",
+    "stale": "O registo foi alterado entretanto. Reveja os dados atuais e tente novamente."
+  },
   "privacy": {
     "title": "Aviso de privacidade",
     "draft": "Este aviso só pode ser usado em produção depois de aprovado pela clínica e por aconselhamento jurídico português.",
-    "contact": "Contacte a clínica para acesso, correção, oposição, limitação ou apagamento dos seus dados."
+    "draftLabel": "Rascunho não aprovado",
+    "purposesTitle": "Finalidades e direitos",
+    "purposes": "A clínica usa os dados de contacto, registos de animais e vacinação para gerir a relação clínica e enviar lembretes pedidos.",
+    "contact": "Contacte a clínica para acesso, exportação, correção, oposição, limitação ou apagamento dos seus dados, ou para reclamar à CNPD."
   },
   "sms": {
     "reminder": "Lembrete: {pet} tem a vacina {vaccine} prevista para {date}. Contacte a clínica veterinária."

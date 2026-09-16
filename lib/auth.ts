@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { redirectForRoleAccess } from '@/lib/auth-routing';
+import { vetMfaRequirementIsSatisfied } from '@/lib/mfa';
 import { createClient } from '@/lib/supabase/server';
 import type { User } from '@supabase/supabase-js';
 
@@ -50,7 +51,7 @@ export async function requireRole(role: Role): Promise<RoleContext> {
 
   if (role === 'vet' && profile.mfa_required) {
     const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (data?.currentLevel !== 'aal2') {
+    if (!vetMfaRequirementIsSatisfied(true, data?.currentLevel)) {
       redirect('/mfa');
     }
   }

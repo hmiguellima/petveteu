@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { requireRole } from '@/lib/auth';
 import { petMutationSchema, petSchema, profileSchema } from '@/lib/validation';
 
@@ -57,6 +58,10 @@ export async function updateProfile(formData: FormData): Promise<void> {
     p_sms: parsed.data.smsEnabled,
     p_version: parsed.data.version,
   });
+
+  if (!error) {
+    cookies().set('locale', parsed.data.locale, { sameSite: 'lax', path: '/' });
+  }
 
   revalidatePath('/client');
   redirect(resultPath(error, 'profile-saved'));

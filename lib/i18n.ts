@@ -1,8 +1,20 @@
 import pt from '@/messages/pt-PT.json';
 import en from '@/messages/en.json';
+import {
+  renderReminderMessage,
+  type ReminderLocale,
+} from '@/supabase/functions/_shared/reminder-message';
+
+export { renderReminderMessage };
 
 export type Locale = 'pt-PT' | 'en';
-type Catalog = typeof pt;
+export type Catalog = typeof pt;
+export const defaultLocale: Locale = 'pt-PT';
+
+export function resolveLocale(value: string | null | undefined): Locale {
+  return value === 'en' ? 'en' : defaultLocale;
+}
+
 export const getCatalog = (locale: Locale): Catalog =>
   locale === 'en' ? deepFallback(pt, en) : pt;
 
@@ -30,11 +42,10 @@ export function reminderText(
   vaccine: string,
   dueDate: string,
 ): string {
-  const date = new Intl.DateTimeFormat(locale, {
-    dateStyle: 'long',
-    timeZone: 'Europe/Lisbon',
-  }).format(new Date(`${dueDate}T12:00:00Z`));
-  const template = getCatalog(locale).sms.reminder;
-
-  return template.replace('{pet}', pet).replace('{vaccine}', vaccine).replace('{date}', date);
+  return renderReminderMessage({
+    dueDate,
+    locale: locale as ReminderLocale,
+    petName: pet,
+    vaccineType: vaccine,
+  });
 }
