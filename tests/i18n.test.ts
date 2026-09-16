@@ -20,8 +20,8 @@ describe('catalogs', () => {
     );
   });
   it('covers vet and MFA surfaces in both locales', () => {
-    expect(getCatalog('pt-PT').vet.runToday).toBe('Executar hoje');
-    expect(getCatalog('en').vet.runToday).toBe('Run today');
+    expect(getCatalog('pt-PT').vet.runToday).toBe('Processar lembretes de hoje');
+    expect(getCatalog('en').vet.runToday).toBe("Process today's reminders");
     expect(getCatalog('pt-PT').mfa.title).toBe('Autenticação multifator obrigatória');
     expect(getCatalog('en').mfa.title).toBe('Multi-factor authentication required');
   });

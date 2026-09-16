@@ -1,8 +1,9 @@
+import { getLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { requireRole } from '@/lib/auth';
 import { createPet, removePet, updatePet, updateProfile } from './actions';
 import { ReadOnlySchedule, type ClientVaccinationView } from './read-only-schedule';
-import { getCatalog, type Catalog } from '@/lib/i18n';
+import { getCatalog, resolveLocale, type Catalog } from '@/lib/i18n';
 
 type PageProps = {
   searchParams?: { error?: string; status?: string };
@@ -23,7 +24,7 @@ type PetView = {
 
 export default async function Page({ searchParams }: PageProps): Promise<React.JSX.Element> {
   const { supabase, profile } = await requireRole('client');
-  const messages = getCatalog(profile.locale);
+  const messages = getCatalog(resolveLocale(await getLocale()));
   const { data: pets } = await supabase
     .from('pets')
     .select('*,vaccination_entries(id,vaccine_type,due_date)')

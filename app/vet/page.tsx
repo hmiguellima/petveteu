@@ -1,6 +1,7 @@
+import { getLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { requireRole } from '@/lib/auth';
-import { getCatalog, type Catalog } from '@/lib/i18n';
+import { getCatalog, resolveLocale, type Catalog } from '@/lib/i18n';
 import {
   changeClientEmail,
   createVetPet,
@@ -47,7 +48,7 @@ type PetView = {
 // eslint-disable-next-line max-lines-per-function
 export default async function Page({ searchParams }: PageProps): Promise<React.JSX.Element> {
   const { supabase, profile } = await requireRole('vet');
-  const messages = getCatalog(profile.locale);
+  const messages = getCatalog(resolveLocale(await getLocale()));
   const [{ data: clients }, { data: pets }, { data: runs }] = await Promise.all([
     supabase.from('profiles').select('*').eq('role', 'client').order('full_name'),
     supabase
@@ -237,6 +238,7 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
           </div>
           <div className="card mt-4">
             <h2 className="font-bold">{messages.vet.runs}</h2>
+            <p className="mb-3 text-sm text-slate-600">{messages.vet.runTodayHelp}</p>
             <form action={manualRun}>
               <button>{messages.vet.runToday}</button>
             </form>
