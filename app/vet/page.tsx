@@ -5,7 +5,6 @@ import { getCatalog, resolveLocale, type Catalog } from '@/lib/i18n';
 import {
   changeClientEmail,
   createVetPet,
-  inviteClient,
   manualRun,
   removeVetPet,
   removeVaccine,
@@ -14,6 +13,7 @@ import {
   updateClient,
   updateVetPet,
 } from './actions';
+import { InviteClientForm } from './invite-client-form';
 import { ReminderStatus, type ReminderStatusLabels, type ReminderView } from './reminder-status';
 
 type PageProps = { searchParams?: { error?: string; status?: string } };
@@ -78,28 +78,7 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
           <h2 className="mb-3 text-2xl font-bold">{messages.vet.clients}</h2>
           <details className="card mb-3">
             <summary className="cursor-pointer font-bold">{messages.vet.addClient}</summary>
-            <form action={inviteClient} className="mt-4">
-              <label>
-                {messages.auth.name}
-                <input required name="name" maxLength={120} />
-              </label>
-              <label>
-                {messages.auth.email}
-                <input required name="email" type="email" />
-              </label>
-              <label>
-                {messages.auth.phone}
-                <input required name="phone" type="tel" placeholder="+351912345678" />
-              </label>
-              <label>
-                {messages.auth.language}
-                <select name="locale" defaultValue="pt-PT">
-                  <option value="pt-PT">Português</option>
-                  <option value="en">English</option>
-                </select>
-              </label>
-              <button>{messages.vet.sendInvite}</button>
-            </form>
+            <InviteClientForm messages={messages} />
           </details>
           <div className="space-y-3">
             {clients?.map((client: ClientView) => (

@@ -55,7 +55,7 @@ function vetPath(error: unknown, success: string): string {
   return `/vet?error=${code}`;
 }
 
-export async function inviteClient(formData: FormData): Promise<void> {
+export async function inviteClient(formData: FormData): Promise<string> {
   const { supabase } = await requireRole('vet');
   const parsed = inviteSchema.safeParse({
     email: formData.get('email'),
@@ -65,7 +65,7 @@ export async function inviteClient(formData: FormData): Promise<void> {
   });
 
   if (!parsed.success) {
-    redirect('/vet?error=invalid-client');
+    return '/vet?error=invalid-client';
   }
 
   const { error } = await supabase.functions.invoke('admin-clients', {
@@ -73,7 +73,8 @@ export async function inviteClient(formData: FormData): Promise<void> {
   });
 
   revalidatePath('/vet');
-  redirect(vetPath(error, 'client-invited'));
+
+  return vetPath(error, 'client-invited');
 }
 
 export async function updateClient(formData: FormData): Promise<void> {
