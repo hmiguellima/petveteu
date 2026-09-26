@@ -1,8 +1,11 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import type { Database } from '../_shared/database.types.ts';
 import { renderReminderMessage } from '../_shared/reminder-message.ts';
 import { submitWithTwilio } from './delivery.ts';
 import { decide, lisbonDate, type Candidate } from './engine.ts';
 import { hasValidCronCredential, runHealth } from './operations.ts';
+
+type AppSupabaseClient = SupabaseClient<Database>;
 
 type TriggerSource = 'manual' | 'scheduled';
 type Invocation = { mode?: 'monitor'; source?: TriggerSource };
@@ -91,40 +94,37 @@ function assertNoError(error: { message: string } | null): void {
   }
 }
 
-async function authorizeVet(
-  request: Request,
-  supabase: ReturnType<typeof createClient>,
-): Promise<boolean> {
-  const authorization = request.headers.get('Authorization');
-  if (!authorization) {
+async function authorizeVet(request: Request, supabase: AppSupabaseClient): Promise<boolean> {
+  const authorization = request.headers.get('Authorization') ?? '';
+  const [scheme, token, ...extraParts] = authorization.trim().split(/\s+/);
+
+  if (scheme.toLowerCase() !== 'bearer' || !token || extraParts.length > 0) {
     return false;
   }
 
-  const userSupabase = createClient(
+  const userSupabase = createClient<Database>(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_ANON_KEY')!,
     { global: { headers: { Authorization: authorization } } },
   );
-  const {
-    data: { user },
-  } = await userSupabase.auth.getUser();
+  const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
+  const actor = claimsData?.claims.sub;
+
+  if (claimsError || !actor) {
+    return false;
+  }
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('role,mfa_required')
-    .eq('id', user?.id ?? '')
+    .eq('id', actor)
     .single();
 
   if (profile?.role !== 'vet') {
     return false;
   }
 
-  if (!profile.mfa_required) {
-    return true;
-  }
-
-  const { data: assurance, error } = await userSupabase.auth.mfa.getAuthenticatorAssuranceLevel();
-
-  return !error && assurance.currentLevel === 'aal2';
+  return !profile.mfa_required || claimsData.claims.aal === 'aal2';
 }
 
 async function sendAlert(businessDate: string, health: 'failed' | 'missing'): Promise<void> {
@@ -144,7 +144,7 @@ async function sendAlert(businessDate: string, health: 'failed' | 'missing'): Pr
 // so each attempt is persisted before its lifecycle status is advanced.
 // eslint-disable-next-line max-lines-per-function, complexity
 Deno.serve(async (request) => {
-  const supabase = createClient(
+  const supabase = createClient<Database>(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
