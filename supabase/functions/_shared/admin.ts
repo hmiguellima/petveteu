@@ -1,16 +1,28 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import type { Database } from './database.types.ts';
 
-type SupabaseClient = ReturnType<typeof createClient>;
+type AppSupabaseClient = SupabaseClient<Database>;
 
 type DatabaseClients = {
-  admin: SupabaseClient;
-  caller: SupabaseClient;
+  admin: AppSupabaseClient;
+  caller: AppSupabaseClient;
 };
 
 type VetContext = {
   actor: string;
-  admin: SupabaseClient;
+  admin: AppSupabaseClient;
 };
+
+function getBearerToken(request: Request): string {
+  const authorization = request.headers.get('Authorization') ?? '';
+  const [scheme, token, ...extraParts] = authorization.trim().split(/\s+/);
+
+  if (scheme.toLowerCase() !== 'bearer' || !token || extraParts.length > 0) {
+    throw new Error('unauthorized');
+  }
+
+  return token;
+}
 
 export function createDatabaseClients(request: Request): DatabaseClients {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -19,45 +31,46 @@ export function createDatabaseClients(request: Request): DatabaseClients {
   const authorization = request.headers.get('Authorization') ?? '';
 
   return {
-    caller: createClient(supabaseUrl, anonymousKey, {
+    caller: createClient<Database>(supabaseUrl, anonymousKey, {
       global: { headers: { Authorization: authorization } },
     }),
-    admin: createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } }),
+    admin: createClient<Database>(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false },
+    }),
   };
 }
 
 export async function requireVet(request: Request): Promise<VetContext> {
   const { caller, admin } = createDatabaseClients(request);
-  const {
-    data: { user },
-  } = await caller.auth.getUser();
+  const token = getBearerToken(request);
+  const { data, error: claimsError } = await caller.auth.getClaims(token);
+  const actor = data?.claims.sub;
 
-  if (!user) {
+  if (claimsError || !actor) {
     throw new Error('unauthorized');
   }
 
-  const { data } = await admin
+  const { data: profile } = await admin
     .from('profiles')
     .select('role,mfa_required')
-    .eq('id', user.id)
+    .eq('id', actor)
     .single();
 
-  if (data?.role !== 'vet') {
+  if (profile?.role !== 'vet') {
     throw new Error('forbidden');
   }
 
-  if (data.mfa_required) {
-    const { data: assurance, error } = await caller.auth.mfa.getAuthenticatorAssuranceLevel();
-
-    if (error || assurance.currentLevel !== 'aal2') {
-      throw new Error('forbidden');
-    }
+  if (profile.mfa_required && data.claims.aal !== 'aal2') {
+    throw new Error('forbidden');
   }
 
-  return { admin, actor: user.id };
+  return { admin, actor };
 }
 
-export async function resendClientInvitation(admin: SupabaseClient, email: string): Promise<void> {
+export async function resendClientInvitation(
+  admin: AppSupabaseClient,
+  email: string,
+): Promise<void> {
   const { error } = await admin.auth.admin.inviteUserByEmail(email);
 
   if (error) {

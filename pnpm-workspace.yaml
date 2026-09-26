@@ -2,5 +2,6 @@ packages:
   - .
 
 allowBuilds:
+  deno: true
   esbuild: true
   unrs-resolver: true
