@@ -1,12 +1,34 @@
+import { getLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { requireRole } from '@/lib/auth';
-import { createPet, removePet, updateProfile } from './actions';
+import { createPet, removePet, updatePet, updateProfile } from './actions';
+import { ReadOnlySchedule, type ClientVaccinationView } from './read-only-schedule';
+import { getCatalog, resolveLocale, type Catalog } from '@/lib/i18n';
 
-export default async function Page(): Promise<React.JSX.Element> {
+type PageProps = {
+  searchParams?: { error?: string; status?: string };
+};
+
+type PetView = {
+  birth_date_is_estimated: boolean;
+  breed: string | null;
+  date_of_birth: string;
+  id: string;
+  name: string;
+  notification_expiry_years: number;
+  other_species: string | null;
+  species: 'cat' | 'dog' | 'other';
+  vaccination_entries?: ClientVaccinationView[];
+  version: number;
+};
+
+export default async function Page({ searchParams }: PageProps): Promise<React.JSX.Element> {
   const { supabase, profile } = await requireRole('client');
+  const messages = getCatalog(resolveLocale(await getLocale()));
   const { data: pets } = await supabase
     .from('pets')
-    .select('*,vaccination_entries(*,reminders(*,reminder_attempts(*)))')
+    .select('*,vaccination_entries(id,vaccine_type,due_date)')
+    .eq('owner_id', profile.id)
     .order('name');
 
   return (
@@ -14,25 +36,32 @@ export default async function Page(): Promise<React.JSX.Element> {
       <header className="mb-8 flex justify-between">
         <div>
           <p className="text-sage">PetVet EU</p>
-          <h1 className="text-4xl font-bold">Olá, {profile.full_name}</h1>
+          <h1 className="text-4xl font-bold">
+            {messages.client.hello.replace('{name}', profile.full_name)}
+          </h1>
         </div>
-        <Link href="/privacy">Privacidade</Link>
+        <Link href="/privacy">{messages.common.privacy}</Link>
       </header>
+      <Feedback error={searchParams?.error} status={searchParams?.status} messages={messages} />
       <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
         <aside className="card">
-          <h2 className="mb-4 text-xl font-bold">O meu perfil</h2>
+          <h2 className="mb-4 text-xl font-bold">{messages.client.profile}</h2>
+          <p className="mb-4 text-sm">
+            {messages.client.accessEmail.replace('{email}', profile.email)}
+            {profile.is_incomplete ? ` · ${messages.client.completeContact}` : ''}
+          </p>
           <form action={updateProfile}>
             <input type="hidden" name="version" value={profile.version} />
             <label>
-              Nome
+              {messages.auth.name}
               <input name="name" defaultValue={profile.full_name} />
             </label>
             <label>
-              Telemóvel
+              {messages.auth.phone}
               <input name="phone" defaultValue={profile.phone ?? ''} />
             </label>
             <label>
-              Idioma
+              {messages.auth.language}
               <select name="locale" defaultValue={profile.locale}>
                 <option value="pt-PT">Português</option>
                 <option value="en">English</option>
@@ -40,23 +69,23 @@ export default async function Page(): Promise<React.JSX.Element> {
             </label>
             <label className="flex">
               <input type="checkbox" name="sms" defaultChecked={profile.sms_enabled_by_client} />{' '}
-              Receber lembretes SMS
+              {messages.client.sms}
             </label>
-            <button>Guardar</button>
+            <button>{messages.common.save}</button>
           </form>
           <hr className="my-6" />
-          <h2 className="mb-4 text-xl font-bold">Adicionar animal</h2>
-          <PetForm />
+          <h2 className="mb-4 text-xl font-bold">{messages.client.addPet}</h2>
+          <PetForm messages={messages} />
         </aside>
         <section className="space-y-4">
-          {pets?.map((pet) => (
+          {pets?.map((pet: PetView) => (
             <article className="card" key={pet.id}>
               <div className="flex justify-between">
                 <h2 className="text-2xl font-bold">{pet.name}</h2>
                 <form action={removePet}>
                   <input type="hidden" name="id" value={pet.id} />
                   <input type="hidden" name="version" value={pet.version} />
-                  <button className="bg-coral">Remover</button>
+                  <button className="bg-coral">{messages.common.remove}</button>
                 </form>
               </div>
               <p>
@@ -64,20 +93,18 @@ export default async function Page(): Promise<React.JSX.Element> {
                 {pet.birth_date_is_estimated ? ' (estimada)' : ''} · lembretes até{' '}
                 {pet.notification_expiry_years} anos
               </p>
-              <h3 className="mt-5 font-bold">Vacinas</h3>
-              {pet.vaccination_entries?.length ? (
-                <ul>
-                  {pet.vaccination_entries.map(
-                    (vaccination: { id: string; vaccine_type: string; due_date: string }) => (
-                      <li className="border-b py-2" key={vaccination.id}>
-                        <strong>{vaccination.vaccine_type}</strong> — {vaccination.due_date}
-                      </li>
-                    ),
-                  )}
-                </ul>
-              ) : (
-                <p className="text-slate-500">Sem vacinas registadas.</p>
-              )}
+              <details className="mt-4">
+                <summary className="cursor-pointer font-bold">{messages.client.editPet}</summary>
+                <PetForm messages={messages} pet={pet} />
+              </details>
+              <ReadOnlySchedule
+                labels={{
+                  empty: messages.client.noVaccines,
+                  schedule: messages.client.scheduleLabel,
+                  vaccines: messages.client.schedule,
+                }}
+                vaccinations={pet.vaccination_entries}
+              />
             </article>
           ))}
         </section>
@@ -86,37 +113,75 @@ export default async function Page(): Promise<React.JSX.Element> {
   );
 }
 
-function PetForm(): React.JSX.Element {
+function Feedback({
+  error,
+  status,
+  messages,
+}: {
+  error?: string;
+  status?: string;
+  messages: Catalog;
+}): React.JSX.Element | null {
+  if (!error && !status) {
+    return null;
+  }
+
+  const message = error
+    ? error === 'stale'
+      ? messages.validation.stale
+      : messages.validation.invalid
+    : messages.client.saved;
+
   return (
-    <form action={createPet}>
+    <p className={`mb-5 rounded-lg p-3 ${error ? 'bg-red-100 text-red-900' : 'bg-green-100'}`}>
+      {message}
+    </p>
+  );
+}
+
+function PetForm({ messages, pet }: { messages: Catalog; pet?: PetView }): React.JSX.Element {
+  return (
+    <form action={pet ? updatePet : createPet} className={pet ? 'mt-4' : undefined}>
+      {pet ? (
+        <>
+          <input type="hidden" name="id" value={pet.id} />
+          <input type="hidden" name="version" value={pet.version} />
+        </>
+      ) : null}
       <label>
-        Nome
-        <input required name="name" maxLength={100} />
+        {messages.pet.name}
+        <input required name="name" maxLength={100} defaultValue={pet?.name} />
       </label>
       <label>
-        Espécie
-        <select name="species">
-          <option value="dog">Cão</option>
-          <option value="cat">Gato</option>
-          <option value="other">Outra</option>
+        {messages.pet.species}
+        <select name="species" defaultValue={pet?.species ?? 'dog'}>
+          <option value="dog">{messages.pet.dog}</option>
+          <option value="cat">{messages.pet.cat}</option>
+          <option value="other">{messages.pet.other}</option>
         </select>
       </label>
       <label>
-        Outra espécie
-        <input name="otherSpecies" maxLength={60} />
+        {messages.pet.otherSpecies}
+        <input name="otherSpecies" maxLength={60} defaultValue={pet?.other_species ?? ''} />
       </label>
       <label>
-        Nascimento
-        <input required type="date" name="birth" />
+        {messages.pet.birth}
+        <input required type="date" name="birth" defaultValue={pet?.date_of_birth} />
       </label>
       <label className="flex">
-        <input type="checkbox" name="estimated" /> Data estimada
+        <input type="checkbox" name="estimated" defaultChecked={pet?.birth_date_is_estimated} />{' '}
+        {messages.pet.estimated}
       </label>
       <label>
-        Raça
-        <input name="breed" maxLength={100} />
+        {messages.pet.breed}
+        <input name="breed" maxLength={100} defaultValue={pet?.breed ?? ''} />
       </label>
-      <button>Adicionar</button>
+      {pet ? (
+        <p className="text-sm text-slate-600">
+          {messages.client.expirySentence.replace('{years}', String(pet.notification_expiry_years))}
+        </p>
+      ) : null}
+      <button>{pet ? messages.client.savePet : messages.client.addPet}</button>
     </form>
   );
 }

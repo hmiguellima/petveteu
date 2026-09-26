@@ -18,22 +18,67 @@
     "email": "Email",
     "phone": "Telemóvel (+351…)",
     "password": "Palavra-passe",
-    "error": "Não foi possível concluir. Verifique os dados."
+    "error": "Não foi possível concluir. Verifique os dados.",
+    "language": "Idioma",
+    "invalid": "Confirme os dados introduzidos e tente novamente.",
+    "conflict": "Já existe uma conta com esse email ou telemóvel.",
+    "credentials": "Email ou palavra-passe incorretos.",
+    "profileError": "Não foi possível carregar o perfil da conta.",
+    "registered": "Conta criada. Confirme o email, se solicitado, e inicie sessão.",
+    "privacyPrefix": "Ao criar uma conta, confirma que consultou o",
+    "privacyLink": "aviso de privacidade"
   },
   "client": {
     "title": "Os meus animais",
     "profile": "O meu perfil",
     "addPet": "Adicionar animal",
     "schedule": "Vacinas",
-    "sms": "Receber lembretes SMS"
+    "sms": "Receber lembretes SMS",
+    "hello": "Olá, {name}",
+    "accessEmail": "Email de acesso: {email}",
+    "completeContact": "complete o contacto para ativar os lembretes",
+    "editPet": "Editar dados",
+    "savePet": "Guardar animal",
+    "saved": "Alterações guardadas.",
+    "noVaccines": "Sem vacinas registadas.",
+    "scheduleLabel": "Calendário de vacinação",
+    "expirySentence": "A clínica definiu o fim dos lembretes aos {years} anos."
   },
   "vet": {
     "title": "Área veterinária",
     "clients": "Clientes",
-    "addClient": "Convidar cliente",
-    "pets": "Animais",
-    "vaccines": "Vacinas",
-    "runs": "Execuções de lembretes"
+    "addClient": "Adicionar cliente",
+    "sendInvite": "Enviar convite",
+    "petsAndVaccines": "Animais e vacinas",
+    "incompleteContact": "contacto incompleto",
+    "clinicSms": "SMS autorizado pela clínica",
+    "clientPreference": "Preferência do cliente: {status}",
+    "effectiveDelivery": "envio efetivo: {status}",
+    "enabled": "ativa",
+    "disabled": "desativada",
+    "active": "ativo",
+    "blocked": "bloqueado",
+    "accessAndEmail": "Acesso e email",
+    "newEmail": "Novo email",
+    "changeEmail": "Alterar email de acesso",
+    "resendInvite": "Reenviar convite",
+    "addPet": "Adicionar animal",
+    "editPet": "Editar animal",
+    "removeVaccine": "Remover vacina",
+    "editVaccine": "Editar vacina",
+    "addVaccine": "Adicionar vacina",
+    "saveVaccine": "Guardar vacina",
+    "petSummary": "{species} · expira aos {years} anos",
+    "runs": "Execuções",
+    "runToday": "Processar lembretes de hoje",
+    "runTodayHelp": "Executa agora o lote da data de Lisboa e processa vacinas com vencimento entre hoje e os próximos dois dias.",
+    "runRunning": "em curso",
+    "runSucceeded": "concluída",
+    "runFailed": "falhou",
+    "saved": "Operação concluída.",
+    "duplicateVaccine": "Já existe uma vacina ativa com o mesmo tipo e data para este animal.",
+    "invalidVaccine": "Vacina inválida. Confirme as datas, o tipo e o tamanho das notas.",
+    "invalid": "Não foi possível concluir. Confirme os dados; o email e o telefone têm de ser únicos."
   },
   "pet": {
     "name": "Nome",
@@ -44,19 +89,47 @@
     "birth": "Data de nascimento",
     "estimated": "Data estimada",
     "breed": "Raça",
-    "expiry": "Idade limite dos lembretes"
+    "expiry": "Idade limite dos lembretes",
+    "expiryDefault": "Padrão da espécie",
+    "otherSpecies": "Outra espécie"
   },
   "vaccine": {
     "type": "Vacina",
     "due": "Data prevista",
     "administered": "Última administração",
     "notes": "Notas",
-    "status": "Estado do lembrete"
+    "status": "Estado do lembrete",
+    "pending": "pendente",
+    "submitted": "submetido ao operador",
+    "delivered": "entregue",
+    "exhausted": "tentativas esgotadas",
+    "cancelled": "cancelado",
+    "permanentlySkipped": "ignorado permanentemente",
+    "dryRun": "simulação (não enviado)",
+    "transientFailure": "falha temporária — nova tentativa pendente"
+  },
+  "mfa": {
+    "title": "Autenticação multifator obrigatória",
+    "instructions": "Use uma aplicação autenticadora para proteger a área veterinária.",
+    "preparing": "A preparar a autenticação multifator…",
+    "enroll": "Leia o código QR com a sua aplicação autenticadora.",
+    "scan": "Código QR para configurar a autenticação multifator",
+    "manualSecret": "Chave para configuração manual",
+    "code": "Código de seis dígitos",
+    "verify": "Validar e continuar",
+    "error": "Não foi possível validar o código. Confirme-o e tente novamente."
+  },
+  "validation": {
+    "invalid": "Não foi possível guardar. Confirme todos os campos e tente novamente.",
+    "stale": "O registo foi alterado entretanto. Reveja os dados atuais e tente novamente."
   },
   "privacy": {
     "title": "Aviso de privacidade",
     "draft": "Este aviso só pode ser usado em produção depois de aprovado pela clínica e por aconselhamento jurídico português.",
-    "contact": "Contacte a clínica para acesso, correção, oposição, limitação ou apagamento dos seus dados."
+    "draftLabel": "Rascunho não aprovado",
+    "purposesTitle": "Finalidades e direitos",
+    "purposes": "A clínica usa os dados de contacto, registos de animais e vacinação para gerir a relação clínica e enviar lembretes pedidos.",
+    "contact": "Contacte a clínica para acesso, exportação, correção, oposição, limitação ou apagamento dos seus dados, ou para reclamar à CNPD."
   },
   "sms": {
     "reminder": "Lembrete: {pet} tem a vacina {vaccine} prevista para {date}. Contacte a clínica veterinária."

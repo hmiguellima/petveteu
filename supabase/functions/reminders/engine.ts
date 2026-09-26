@@ -13,7 +13,11 @@ export type Candidate = {
   reminderStatus?: string;
   permanentReason?: string | null;
 };
-export type Decision = { kind: 'eligible' | 'skip' | 'exhaust'; reason?: string };
+export type Decision = {
+  kind: 'eligible' | 'skip' | 'exhaust';
+  reason?: string;
+  recordAttempt?: boolean;
+};
 
 export function lisbonDate(now: Date = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', {
@@ -48,24 +52,36 @@ export function decide(candidate: Candidate, today: string): Decision {
   if (candidate.reminderStatus === 'submitted' || candidate.reminderStatus === 'delivered') {
     return { kind: 'skip', reason: 'already_submitted' };
   }
-  if (candidate.permanentReason) {
-    return { kind: 'skip', reason: candidate.permanentReason };
+  if (candidate.reminderStatus === 'permanently_skipped') {
+    return {
+      kind: 'skip',
+      reason: candidate.permanentReason ?? 'permanently_skipped',
+      recordAttempt: false,
+    };
   }
   if (candidate.deletedAt) {
-    return { kind: 'skip', reason: 'pet_deleted' };
+    return permanentDecision(candidate, 'pet_deleted');
   }
   if (!candidate.clientSms) {
-    return { kind: 'skip', reason: 'client_opt_out' };
+    return permanentDecision(candidate, 'client_opt_out');
   }
   if (!candidate.vetSms) {
-    return { kind: 'skip', reason: 'vet_opt_out' };
+    return permanentDecision(candidate, 'vet_opt_out');
   }
   if (!candidate.phone || !/^\+[1-9]\d{7,14}$/.test(candidate.phone)) {
-    return { kind: 'skip', reason: 'invalid_phone' };
+    return permanentDecision(candidate, 'invalid_phone');
   }
   if (wholeYears(candidate.birthDate, today) >= candidate.expiryYears) {
-    return { kind: 'skip', reason: 'age_expired' };
+    return permanentDecision(candidate, 'age_expired');
   }
 
   return { kind: 'eligible' };
+}
+
+function permanentDecision(candidate: Candidate, reason: string): Decision {
+  return {
+    kind: 'skip',
+    reason,
+    recordAttempt: candidate.permanentReason !== reason,
+  };
 }

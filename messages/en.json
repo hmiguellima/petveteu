@@ -18,22 +18,67 @@
     "email": "Email",
     "phone": "Mobile (+…)",
     "password": "Password",
-    "error": "We could not complete that request. Check the details."
+    "error": "We could not complete that request. Check the details.",
+    "language": "Language",
+    "invalid": "Check the information you entered and try again.",
+    "conflict": "An account already exists with that email or mobile number.",
+    "credentials": "Incorrect email or password.",
+    "profileError": "We could not load the account profile.",
+    "registered": "Account created. Confirm your email if requested, then sign in.",
+    "privacyPrefix": "By creating an account, you confirm that you have read the",
+    "privacyLink": "privacy notice"
   },
   "client": {
     "title": "My pets",
     "profile": "My profile",
     "addPet": "Add pet",
     "schedule": "Vaccines",
-    "sms": "Receive SMS reminders"
+    "sms": "Receive SMS reminders",
+    "hello": "Hello, {name}",
+    "accessEmail": "Sign-in email: {email}",
+    "completeContact": "complete your contact details to enable reminders",
+    "editPet": "Edit details",
+    "savePet": "Save pet",
+    "saved": "Changes saved.",
+    "noVaccines": "No vaccines recorded.",
+    "scheduleLabel": "Vaccination schedule",
+    "expirySentence": "The clinic set reminders to end at {years} years of age."
   },
   "vet": {
     "title": "Veterinary portal",
     "clients": "Clients",
-    "addClient": "Invite client",
-    "pets": "Pets",
-    "vaccines": "Vaccines",
-    "runs": "Reminder runs"
+    "addClient": "Add client",
+    "sendInvite": "Send invitation",
+    "petsAndVaccines": "Pets and vaccines",
+    "incompleteContact": "incomplete contact details",
+    "clinicSms": "SMS authorized by the clinic",
+    "clientPreference": "Client preference: {status}",
+    "effectiveDelivery": "effective delivery: {status}",
+    "enabled": "enabled",
+    "disabled": "disabled",
+    "active": "active",
+    "blocked": "blocked",
+    "accessAndEmail": "Access and email",
+    "newEmail": "New email",
+    "changeEmail": "Change sign-in email",
+    "resendInvite": "Resend invitation",
+    "addPet": "Add pet",
+    "editPet": "Edit pet",
+    "removeVaccine": "Remove vaccine",
+    "editVaccine": "Edit vaccine",
+    "addVaccine": "Add vaccine",
+    "saveVaccine": "Save vaccine",
+    "petSummary": "{species} · reminders end at {years} years",
+    "runs": "Reminder runs",
+    "runToday": "Process today's reminders",
+    "runTodayHelp": "Runs the Lisbon-date batch now and processes vaccines due today through the next two days.",
+    "runRunning": "running",
+    "runSucceeded": "completed",
+    "runFailed": "failed",
+    "saved": "Operation completed.",
+    "duplicateVaccine": "An active vaccine with the same type and date already exists for this pet.",
+    "invalidVaccine": "Invalid vaccine. Check the dates, type, and notes length.",
+    "invalid": "We could not complete the request. Check the details; email and phone must be unique."
   },
   "pet": {
     "name": "Name",
@@ -44,19 +89,46 @@
     "birth": "Date of birth",
     "estimated": "Estimated date",
     "breed": "Breed",
-    "expiry": "Reminder expiry age"
+    "expiry": "Reminder expiry age",
+    "expiryDefault": "Species default",
+    "otherSpecies": "Other species"
   },
   "vaccine": {
     "type": "Vaccine",
     "due": "Due date",
     "administered": "Last administered",
     "notes": "Notes",
-    "status": "Reminder status"
+    "status": "Reminder status",
+    "pending": "pending",
+    "submitted": "submitted to provider",
+    "delivered": "delivered",
+    "exhausted": "attempts exhausted",
+    "cancelled": "cancelled",
+    "permanentlySkipped": "permanently skipped",
+    "dryRun": "dry run (not sent)",
+    "transientFailure": "temporary failure — retry pending"
+  },
+  "mfa": {
+    "title": "Multi-factor authentication required",
+    "instructions": "Use an authenticator app to protect the veterinary portal.",
+    "preparing": "Preparing multi-factor authentication…",
+    "enroll": "Scan the QR code with your authenticator app.",
+    "scan": "QR code for multi-factor authentication setup",
+    "manualSecret": "Manual setup key",
+    "code": "Six-digit code",
+    "verify": "Verify and continue",
+    "error": "The code could not be verified. Check it and try again."
+  },
+  "validation": {
+    "invalid": "We could not save the changes. Check every field and try again."
   },
   "privacy": {
     "title": "Privacy notice",
     "draft": "This notice may only be used in production after approval by the practice and qualified Portuguese legal review.",
-    "contact": "Contact the clinic to request access, correction, objection, restriction, or erasure."
+    "draftLabel": "Unapproved draft",
+    "purposesTitle": "Purposes and rights",
+    "purposes": "The practice uses contact, pet, and vaccination records to manage clinical care and send requested reminders.",
+    "contact": "Contact the practice to request access, export, correction, objection, restriction, or erasure, or to complain to the CNPD."
   },
   "sms": {
     "reminder": "Reminder: {pet}'s {vaccine} vaccination is due on {date}. Please contact the veterinary clinic."

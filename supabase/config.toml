@@ -1,5 +1,11 @@
 project_id = "petveteu"
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
 [functions.reminders]
 verify_jwt = false
+
 [functions.admin-clients]
 verify_jwt = true

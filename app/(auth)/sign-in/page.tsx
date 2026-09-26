@@ -1,23 +1,22 @@
 import { signIn } from '../actions';
+import { getTranslations } from 'next-intl/server';
 
 type PageProperties = {
   searchParams: { error?: string; registered?: string };
 };
 
-const errorMessages: Record<string, string> = {
-  credentials: 'Email ou palavra-passe incorretos.',
-  profile: 'Não foi possível carregar o perfil da conta.',
-};
-
-export default function Page({ searchParams }: PageProperties): React.JSX.Element {
-  const errorMessage = searchParams.error ? errorMessages[searchParams.error] : undefined;
+export default async function Page({ searchParams }: PageProperties): Promise<React.JSX.Element> {
+  const translations = await getTranslations();
+  const errorMessage = searchParams.error
+    ? translations(searchParams.error === 'credentials' ? 'auth.credentials' : 'auth.profileError')
+    : undefined;
 
   return (
     <section className="mx-auto mt-20 max-w-md card">
-      <h1 className="mb-6 text-3xl font-bold">Entrar</h1>
+      <h1 className="mb-6 text-3xl font-bold">{translations('auth.signIn')}</h1>
       {searchParams.registered ? (
         <p role="status" className="mb-4 text-green-700">
-          Conta criada. Confirme o email, se solicitado, e inicie sessão.
+          {translations('auth.registered')}
         </p>
       ) : null}
       {errorMessage ? (
@@ -27,14 +26,14 @@ export default function Page({ searchParams }: PageProperties): React.JSX.Elemen
       ) : null}
       <form action={signIn}>
         <label>
-          Email
+          {translations('auth.email')}
           <input required type="email" name="email" autoComplete="email" />
         </label>
         <label>
-          Palavra-passe
+          {translations('auth.password')}
           <input required type="password" name="password" autoComplete="current-password" />
         </label>
-        <button>Entrar</button>
+        <button>{translations('auth.signIn')}</button>
       </form>
     </section>
   );

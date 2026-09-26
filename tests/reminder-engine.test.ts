@@ -29,6 +29,7 @@ describe('reminder eligibility', () => {
     expect(decide({ ...baseCandidate, phone: '912' }, '2026-09-10')).toEqual({
       kind: 'skip',
       reason: 'invalid_phone',
+      recordAttempt: true,
     }));
   it('stops at expiry birthday', () =>
     expect(decide({ ...baseCandidate, birthDate: '2014-09-10' }, '2026-09-10').reason).toBe(
@@ -38,9 +39,31 @@ describe('reminder eligibility', () => {
     expect(decide({ ...baseCandidate, reminderStatus: 'submitted' }, '2026-09-10').reason).toBe(
       'already_submitted',
     ));
-  it('does not retry permanent conditions unchanged', () =>
+  it('does not record or retry permanent conditions unchanged', () =>
     expect(
-      decide({ ...baseCandidate, permanentReason: 'invalid_phone' }, '2026-09-10').reason,
-    ).toBe('invalid_phone'));
+      decide(
+        { ...baseCandidate, permanentReason: 'invalid_phone', phone: 'invalid' },
+        '2026-09-10',
+      ),
+    ).toEqual({ kind: 'skip', reason: 'invalid_phone', recordAttempt: false }));
+  it('becomes eligible when the condition behind a permanent skip changes', () =>
+    expect(decide({ ...baseCandidate, permanentReason: 'invalid_phone' }, '2026-09-10')).toEqual({
+      kind: 'eligible',
+    }));
+  it('does not retry a provider-level permanent skip', () =>
+    expect(
+      decide(
+        {
+          ...baseCandidate,
+          reminderStatus: 'permanently_skipped',
+          permanentReason: 'twilio_permanent_21211',
+        },
+        '2026-09-10',
+      ),
+    ).toEqual({
+      kind: 'skip',
+      reason: 'twilio_permanent_21211',
+      recordAttempt: false,
+    }));
   it('calculates whole years', () => expect(wholeYears('2020-09-11', '2026-09-10')).toBe(5));
 });

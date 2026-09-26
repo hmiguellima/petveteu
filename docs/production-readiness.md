@@ -1,6 +1,6 @@
 # Production readiness gate
 
-Production is blocked until every item below contains an owner, approval date, and evidence link. Place no personal data or secrets in this file.
+Production is blocked until every item below contains an owner, approval date, and evidence link. Place no personal data or secrets in this file. Use [data-protection-decisions.md](data-protection-decisions.md) for legal/governance decisions, [data-subject-rights-runbook.md](data-subject-rights-runbook.md) for rights exercises, and [security-operations.md](security-operations.md) for operational evidence.
 
 ## Legal and governance decisions (approval required)
 
@@ -29,3 +29,12 @@ Operational logs use event name, severity, timestamp, request correlation ID, an
 ## Rights workflow
 
 Authenticate the requester, create a `data_subject_requests` record, document only outcome/retention basis codes, export scoped data through a protected operator procedure, and record completion. For erasure, disable both SMS flags, cancel pending reminders immediately, erase eligible data, and retain only fields backed by the recorded legal basis/hold.
+
+## Gate decision
+
+- Gate owner: TBD
+- Review date: TBD
+- Decision: **BLOCKED**
+- Evidence bundle: TBD
+
+The default and current decision is blocked. It may change to `APPROVED` only when every item above is checked with dated evidence and all required legal/operational approvers have signed off. Deployment success, passing tests, draft notices, and empty templates are not approval evidence.

@@ -1,14 +1,16 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { renderReminderMessage } from '../_shared/reminder-message.ts';
+import { submitWithTwilio } from './delivery.ts';
 import { decide, lisbonDate, type Candidate } from './engine.ts';
+import { hasValidCronCredential, runHealth } from './operations.ts';
 
-const texts = {
-  'pt-PT': (petName: string, vaccineType: string, dueDate: string) =>
-    `Lembrete: ${petName} tem a vacina ${vaccineType} prevista para ${formatDueDate('pt-PT', dueDate)}. Contacte a clínica veterinária.`,
-  en: (petName: string, vaccineType: string, dueDate: string) =>
-    `Reminder: ${petName}'s ${vaccineType} vaccination is due on ${formatDueDate('en', dueDate)}. Please contact the veterinary clinic.`,
+type TriggerSource = 'manual' | 'scheduled';
+type Invocation = { mode?: 'monitor'; source?: TriggerSource };
+type ReminderAttemptRow = {
+  outcome: string;
+  reason_code: string | null;
+  created_at: string;
 };
-
-type ReminderAttemptRow = { outcome: string; reason_code: string | null };
 type ReminderRow = {
   id: string;
   due_date: string;
@@ -36,23 +38,6 @@ type CandidateRow = {
   reminders?: ReminderRow[];
 };
 
-function formatDueDate(locale: 'pt-PT' | 'en', dueDate: string): string {
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: 'long',
-    timeZone: 'Europe/Lisbon',
-  }).format(new Date(`${dueDate}T12:00:00Z`));
-}
-
-async function getTriggerSource(request: Request): Promise<'manual' | 'scheduled'> {
-  try {
-    const body = await request.clone().json();
-
-    return body.source === 'manual' ? 'manual' : 'scheduled';
-  } catch {
-    return 'scheduled';
-  }
-}
-
 function addDays(date: string, numberOfDays: number): string {
   const result = new Date(`${date}T00:00:00Z`);
   result.setUTCDate(result.getUTCDate() + numberOfDays);
@@ -60,14 +45,28 @@ function addDays(date: string, numberOfDays: number): string {
   return result.toISOString().slice(0, 10);
 }
 
+async function invocationFrom(request: Request): Promise<Invocation> {
+  try {
+    return (await request.clone().json()) as Invocation;
+  } catch {
+    return {};
+  }
+}
+
 function findReminderForDueDate(row: CandidateRow): ReminderRow | undefined {
   return row.reminders?.find((reminder) => reminder.due_date === row.due_date);
+}
+
+function latestAttempt(reminder?: ReminderRow): ReminderAttemptRow | undefined {
+  return reminder?.reminder_attempts?.toSorted((left, right) =>
+    right.created_at.localeCompare(left.created_at),
+  )[0];
 }
 
 function createCandidate(row: CandidateRow, existingReminder?: ReminderRow): Candidate {
   const pet = row.pets;
   const profile = pet.profiles;
-  const lastAttempt = existingReminder?.reminder_attempts?.at(-1);
+  const attempt = latestAttempt(existingReminder);
 
   return {
     entryId: row.id,
@@ -82,41 +81,106 @@ function createCandidate(row: CandidateRow, existingReminder?: ReminderRow): Can
     locale: profile.locale,
     vaccineType: row.vaccine_type,
     reminderStatus: existingReminder?.status,
-    permanentReason: lastAttempt?.outcome === 'permanent_skip' ? lastAttempt.reason_code : null,
+    permanentReason: attempt?.outcome === 'permanent_skip' ? attempt.reason_code : null,
   };
 }
 
+function assertNoError(error: { message: string } | null): void {
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+async function authorizeVet(
+  request: Request,
+  supabase: ReturnType<typeof createClient>,
+): Promise<boolean> {
+  const authorization = request.headers.get('Authorization');
+  if (!authorization) {
+    return false;
+  }
+
+  const userSupabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: authorization } } },
+  );
+  const {
+    data: { user },
+  } = await userSupabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role,mfa_required')
+    .eq('id', user?.id ?? '')
+    .single();
+
+  if (profile?.role !== 'vet') {
+    return false;
+  }
+
+  if (!profile.mfa_required) {
+    return true;
+  }
+
+  const { data: assurance, error } = await userSupabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+  return !error && assurance.currentLevel === 'aal2';
+}
+
+async function sendAlert(businessDate: string, health: 'failed' | 'missing'): Promise<void> {
+  const webhookUrl = Deno.env.get('REMINDER_ALERT_WEBHOOK_URL');
+  if (!webhookUrl) {
+    return;
+  }
+
+  await fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ businessDate, event: 'reminder_run_unhealthy', health }),
+  });
+}
+
+// The handler intentionally keeps the complete batch transaction flow together
+// so each attempt is persisted before its lifecycle status is advanced.
+// eslint-disable-next-line max-lines-per-function, complexity
 Deno.serve(async (request) => {
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
   const today = lisbonDate();
-  const source = await getTriggerSource(request);
+  const invocation = await invocationFrom(request);
+  const source: TriggerSource = invocation.source === 'manual' ? 'manual' : 'scheduled';
 
   if (source === 'manual') {
-    const authorization = request.headers.get('Authorization');
-    if (!authorization) {
-      return new Response('unauthorized', { status: 401 });
-    }
-
-    const userSupabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authorization } } },
-    );
-    const {
-      data: { user },
-    } = await userSupabase.auth.getUser();
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user?.id ?? '')
-      .single();
-
-    if (profile?.role !== 'vet') {
+    if (!(await authorizeVet(request, supabase))) {
       return new Response('forbidden', { status: 403 });
     }
+  } else if (
+    !hasValidCronCredential(
+      request.headers.get('Authorization'),
+      Deno.env.get('REMINDER_CRON_SECRET'),
+    )
+  ) {
+    return new Response('unauthorized', { status: 401 });
+  }
+
+  if (invocation.mode === 'monitor') {
+    const { data, error } = await supabase
+      .from('reminder_job_runs')
+      .select('status')
+      .eq('business_date', today);
+    assertNoError(error);
+    const health = runHealth(data ?? []);
+    if (health !== 'healthy') {
+      await sendAlert(today, health);
+      await supabase.from('admin_audit_events').insert({
+        action: 'reminder_run_alert',
+        details: { business_date: today, health },
+      });
+    }
+
+    return Response.json({ businessDate: today, health });
   }
 
   const { data: run, error: lockError } = await supabase
@@ -124,23 +188,42 @@ Deno.serve(async (request) => {
     .insert({ business_date: today, trigger_source: source })
     .select()
     .single();
-  if (lockError) {
-    return Response.json({ skipped: 'already_running_or_succeeded' });
+  if (lockError || !run) {
+    return Response.json(
+      { businessDate: today, skipped: 'already_running_or_succeeded' },
+      { status: 409 },
+    );
   }
 
   try {
+    const expired = await supabase
+      .from('reminders')
+      .update({ status: 'exhausted' })
+      .eq('status', 'pending')
+      .lt('due_date', today)
+      .select('id');
+    assertNoError(expired.error);
+    if (expired.data?.length) {
+      const { error } = await supabase.from('reminder_attempts').insert(
+        expired.data.map(({ id }) => ({
+          reminder_id: id,
+          outcome: 'permanent_skip',
+          reason_code: 'past_due',
+        })),
+      );
+      assertNoError(error);
+    }
+
     const windowEndDate = addDays(today, 2);
     const { data: rows, error } = await supabase
       .from('vaccination_entries')
       .select(
-        'id,due_date,vaccine_type,pets!inner(name,date_of_birth,notification_expiry_years,deleted_at,profiles!inner(phone,locale,sms_enabled_by_client,sms_enabled_by_vet)),reminders(id,status,reminder_attempts(reason_code,outcome))',
+        'id,due_date,vaccine_type,pets!inner(name,date_of_birth,notification_expiry_years,deleted_at,profiles!inner(phone,locale,sms_enabled_by_client,sms_enabled_by_vet)),reminders(id,due_date,status,reminder_attempts(reason_code,outcome,created_at))',
       )
       .gte('due_date', today)
       .lte('due_date', windowEndDate)
       .is('deleted_at', null);
-    if (error) {
-      throw error;
-    }
+    assertNoError(error);
 
     for (const rawRow of rows ?? []) {
       const row = rawRow as unknown as CandidateRow;
@@ -152,8 +235,8 @@ Deno.serve(async (request) => {
         continue;
       }
 
-      const { data: reminder } = existingReminder
-        ? { data: existingReminder }
+      const reminderResult = existingReminder
+        ? { data: existingReminder, error: null }
         : await supabase
             .from('reminders')
             .upsert(
@@ -162,71 +245,89 @@ Deno.serve(async (request) => {
             )
             .select()
             .single();
+      assertNoError(reminderResult.error);
+      const reminder = reminderResult.data;
+      if (!reminder) {
+        throw new Error('reminder_missing_after_upsert');
+      }
+
       if (decision.kind !== 'eligible') {
-        await supabase.from('reminder_attempts').insert({
-          reminder_id: reminder.id,
-          outcome: 'permanent_skip',
-          reason_code: decision.reason,
-        });
-        await supabase
-          .from('reminders')
-          .update({
-            status: decision.kind === 'exhaust' ? 'exhausted' : 'permanently_skipped',
-          })
-          .eq('id', reminder.id);
+        if (decision.recordAttempt !== false) {
+          const { error: attemptError } = await supabase.from('reminder_attempts').insert({
+            reminder_id: reminder.id,
+            outcome: 'permanent_skip',
+            reason_code: decision.reason,
+          });
+          assertNoError(attemptError);
+          const { error: reminderError } = await supabase
+            .from('reminders')
+            .update({ status: decision.kind === 'exhaust' ? 'exhausted' : 'permanently_skipped' })
+            .eq('id', reminder.id);
+          assertNoError(reminderError);
+        }
         continue;
       }
 
       if (Deno.env.get('SMS_DRY_RUN') !== 'false') {
-        await supabase
-          .from('reminder_attempts')
-          .insert({ reminder_id: reminder.id, outcome: 'dry_run', reason_code: 'configured' });
+        const { error: attemptError } = await supabase.from('reminder_attempts').insert({
+          reminder_id: reminder.id,
+          outcome: 'dry_run',
+          reason_code: 'configured',
+        });
+        assertNoError(attemptError);
+        const { error: reminderError } = await supabase
+          .from('reminders')
+          .update({ status: 'pending' })
+          .eq('id', reminder.id);
+        assertNoError(reminderError);
         continue;
       }
 
-      const body = texts[profile.locale === 'en' ? 'en' : 'pt-PT'](
-        pet.name,
-        row.vaccine_type,
-        row.due_date,
-      );
-      const params = new URLSearchParams({
-        To: profile.phone,
-        From: Deno.env.get('TWILIO_FROM_NUMBER')!,
-        Body: body,
-      });
-      const response = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${Deno.env.get('TWILIO_ACCOUNT_SID')}/Messages.json`,
+      const delivery = await submitWithTwilio(
         {
-          method: 'POST',
-          headers: {
-            Authorization: `Basic ${btoa(
-              `${Deno.env.get('TWILIO_ACCOUNT_SID')}:${Deno.env.get('TWILIO_AUTH_TOKEN')}`,
-            )}`,
-          },
-          body: params,
+          body: renderReminderMessage({
+            dueDate: row.due_date,
+            locale: profile.locale,
+            petName: pet.name,
+            vaccineType: row.vaccine_type,
+          }),
+          to: profile.phone!,
+        },
+        {
+          accountSid: Deno.env.get('TWILIO_ACCOUNT_SID')!,
+          authToken: Deno.env.get('TWILIO_AUTH_TOKEN')!,
+          fromNumber: Deno.env.get('TWILIO_FROM_NUMBER')!,
         },
       );
-      if (response.ok) {
-        const message = await response.json();
-        await supabase
-          .from('reminder_attempts')
-          .insert({ reminder_id: reminder.id, outcome: 'submitted', provider_sid: message.sid });
-        await supabase.from('reminders').update({ status: 'submitted' }).eq('id', reminder.id);
-      } else {
-        await supabase.from('reminder_attempts').insert({
-          reminder_id: reminder.id,
-          outcome: 'transient_failure',
-          reason_code: `twilio_${response.status}`,
-        });
-      }
+      const { error: attemptError } = await supabase.from('reminder_attempts').insert({
+        reminder_id: reminder.id,
+        outcome: delivery.kind,
+        provider_sid: delivery.kind === 'submitted' ? delivery.providerSid : null,
+        reason_code: delivery.kind === 'submitted' ? null : delivery.reasonCode,
+      });
+      assertNoError(attemptError);
+
+      const nextStatus =
+        delivery.kind === 'submitted'
+          ? 'submitted'
+          : delivery.kind === 'permanent_skip'
+            ? 'permanently_skipped'
+            : 'pending';
+      const { error: reminderError } = await supabase
+        .from('reminders')
+        .update({ status: nextStatus })
+        .eq('id', reminder.id);
+      assertNoError(reminderError);
     }
 
-    await supabase
+    const { error: completionError } = await supabase
       .from('reminder_job_runs')
       .update({ status: 'succeeded', completed_at: new Date().toISOString() })
       .eq('id', run.id);
+    assertNoError(completionError);
+
     return Response.json({ ok: true, businessDate: today });
-  } catch (_error) {
+  } catch {
     await supabase
       .from('reminder_job_runs')
       .update({
