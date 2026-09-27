@@ -5,16 +5,16 @@ Dependencies use task IDs in `Depends on`. Tasks whose dependencies are satisfie
 - **DB:** schema, Auth triggers, RLS, grants, mutation functions, and bootstrap.
 - **Web:** authentication, portals, registry, schedules, settings, and status views.
 - **Jobs:** reminder eligibility, Twilio, localized SMS rendering, scheduling, and monitoring.
-- **Readiness:** catalogs, privacy, retention, security operations, documentation, and launch gates.
+- **Readiness:** catalogs, the delivered MFA/log-redaction baseline, documentation, and integration verification. Outstanding GDPR production-readiness work is tracked in `../gdpr-production-readiness/tasks.md`.
 
 Recommended phases:
 
 1. **Foundation:** 1.1, followed by 1.2 and 1.3 concurrently.
 2. **Database contract:** 2.1–2.7. Schema areas may be authored concurrently, but 2.4–2.7 integrate against the complete schema.
-3. **Parallel expansion:** Auth tasks 3.1–3.3, the pure reminder engine in 6.1, the catalog foundation in 7.1, and governance decisions in 8.1.
-4. **Product surfaces:** Registry tasks 4.1–4.4, schedule task 5.1, Twilio task 6.2, and privacy tasks whose dependencies are ready.
+3. **Parallel expansion:** Auth tasks 3.1–3.3, the pure reminder engine in 6.1, and the catalog foundation in 7.1.
+4. **Product surfaces:** Registry tasks 4.1–4.4, schedule task 5.1, and Twilio task 6.2.
 5. **Integration:** 5.2–5.3, 6.3, 7.2, and scheduling/monitoring tasks 6.4–6.6.
-6. **Production readiness:** Complete section 8, documentation, and the final smoke test.
+6. **Completion:** Verify the security baseline, documentation, and final smoke test. Complete the separate `gdpr-production-readiness` change before production use with real personal data.
 
 Critical functional path:
 
@@ -72,17 +72,13 @@ Cross-stream rule: DB owns persistent shapes and authorization contracts. Web an
 - [x] 7.1 **[Readiness/Web]** Establish complete `pt-PT` and `en` catalog structure and progressively cover registration, portals, validation, privacy, and SMS copy with Portuguese fallback; verify locale switching and missing-English-key fallback. **Depends on:** 1.2; starts in phase 3 and completes after all user-visible surfaces.
 - [x] 7.2 **[Jobs/Readiness]** Render reminder SMS from the shared catalogs using the client's saved locale; verify Portuguese and English messages include pet name, vaccine type, and localized due date. **Depends on:** 6.1 and the SMS namespace from 7.1. **Concurrent with:** 5.2, 5.3, 6.3.
 
-## 8. Data protection and production readiness
+## 8. Delivered security baseline
 
-- [ ] 8.1 **[Readiness—early]** Obtain and record approved controller identity/contact, processing purposes and lawful bases, provider/subprocessor inventory, data locations/transfers and safeguards, privacy wording, concrete retention/review periods, DPIA screening outcome, and DPO determination; track processor agreements and any full DPIA as launch prerequisites. **Depends on:** none; begin during foundation. **Provides inputs to:** 8.2, 8.4, 8.6, 8.7.
-- [ ] 8.2 **[Readiness/Web]** Add approved Portuguese and English privacy-notice surfaces to registration and both portals, plus delivery through the vet-created-client communication flow. **Depends on:** 1.2, 3.1, 3.3, approved notice from 8.1, applicable catalog structure from 7.1.
-- [ ] 8.3 **[Readiness/Web/DB]** Implement and document the authenticated clinic-assisted workflow for access/export, correction, objection, restriction, and erasure; verify identity, decisions and continuing retention bases are audited and erasure always cancels future reminders. **Depends on:** 2.3, 2.6, 3.2; policy inputs from 8.1.
-- [ ] 8.4 **[Readiness/DB]** Implement approved retention/disposal jobs for application data and database audit records; document aligned backup and diagnostic-log retention; verify soft-deleted data leaves normal processing immediately and is later erased or irreversibly anonymized absent a hold. **Depends on:** 2.1, 2.2, 2.3 and approved schedule from 8.1.
 - [x] 8.5 **[Readiness/Web]** Require vet MFA and implement structured, redacted application logging; verify ordinary logs exclude SMS bodies, credentials, session tokens, and unnecessary client or pet identifiers. **Depends on:** 3.1; logging can progress concurrently with product surfaces.
-- [ ] 8.6 **[Readiness]** Document and verify restricted production access, secret placement, backup protection and restoration testing, incident detection/response, processor escalation, and applicable breach-notification workflows. **Depends on:** deployment configuration and provider decisions from 8.1; may proceed concurrently with 8.2–8.5.
-- [ ] 8.7 **[Readiness—gate]** Complete the final production privacy/security gate; verify all required decisions, agreements, transfer safeguards, retention schedules, DPIA work, MFA, rights/incident workflows, and restoration evidence exist, otherwise block launch. **Depends on:** 8.1–8.6.
+
+Outstanding GDPR governance, privacy, rights, retention, operations, and launch-gate tasks moved to `../gdpr-production-readiness/tasks.md`.
 
 ## 9. Documentation and end-to-end smoke
 
-- [ ] 9.1 **[Readiness]** Maintain README instructions for local setup, Vercel deployment, vet bootstrap, Twilio, cron, data protection, and production gates as each capability lands; verify a new developer can follow the final document without undocumented steps. **Depends on:** starts after 1.3 and completes after 6.6 and 8.7.
-- [x] 9.2 **[Integration]** End-to-end smoke: register a client with two pets, have the vet set two vaccine due dates with one in two days, run the job once, and verify one SMS or dry-run attempt per due entry and none after client opt-out. **Depends on:** 3.4, 4.2, 4.3, 4.4, 5.1, 5.2, 6.2, 6.3, 6.4, 7.2; production launch additionally depends on 8.7 and completed 9.1.
+- [x] 9.1 **[Readiness]** Maintain README instructions for local setup, Vercel deployment, vet bootstrap, Twilio, cron, data-protection handoff, and production gating; verify a new developer can follow the delivered product setup without undocumented steps and is directed to the separate `gdpr-production-readiness` change before real-data production use. **Depends on:** 1.3 and 6.6.
+- [x] 9.2 **[Integration]** End-to-end smoke: register a client with two pets, have the vet set two vaccine due dates with one in two days, run the job once, and verify one SMS or dry-run attempt per due entry and none after client opt-out. **Depends on:** 3.4, 4.2, 4.3, 4.4, 5.1, 5.2, 6.2, 6.3, 6.4, 7.2; production use with real personal data additionally depends on the separate `gdpr-production-readiness` gate and completed 9.1.
