@@ -6,10 +6,10 @@ Portuguese-first veterinary client portal, vaccination registry, and SMS reminde
 
 Requirements: Node 20+, pnpm 10 or 11, Docker, and the Supabase CLI.
 
-1. Copy `.env.example` to `.env.local` and set the local Supabase URL and anon key. Never put the service-role key or Twilio secrets in Vercel.
+1. Copy `.env.example` to `.env.local` and set the local Supabase URL and anon key. Keep the service-role key, cron credential, bootstrap password, and Twilio secrets out of Vercel and browser-visible variables.
 2. Run `pnpm install`, `supabase start`, and `supabase db reset`.
-3. Run `pnpm dev`. Portuguese is the default; set the `locale` cookie or profile preference to `en` for English.
-4. Verify with `pnpm test`, `pnpm typecheck`, `pnpm build`, and `psql "$LOCAL_DB_URL" -f docs/database-verification.sql`.
+3. Run `pnpm dev --hostname 127.0.0.1`. Portuguese is the default; use the language picker to store the `locale` cookie or authenticated profile preference for English.
+4. Run `pnpm run check` and `pnpm build`. With `LOCAL_DB_URL` pointed at the disposable local database, run `psql "$LOCAL_DB_URL" -f docs/database-verification.sql`.
 
 ## Vet bootstrap
 
@@ -17,7 +17,7 @@ There is no UI or authenticated API for creating vets. Set `NEXT_PUBLIC_SUPABASE
 
 ## Edge Functions and Twilio
 
-Set secrets with `supabase secrets set SUPABASE_SERVICE_ROLE_KEY=... TWILIO_ACCOUNT_SID=... TWILIO_AUTH_TOKEN=... TWILIO_FROM_NUMBER=... SMS_DRY_RUN=true`. Deploy `admin-clients` and `reminders`. Automated tests do not call Twilio. A dry run records an attempt without a SID and leaves its reminder pending.
+Set secrets with `supabase secrets set SUPABASE_SERVICE_ROLE_KEY=... REMINDER_CRON_SECRET=... REMINDER_ALERT_WEBHOOK_URL=... TWILIO_ACCOUNT_SID=... TWILIO_AUTH_TOKEN=... TWILIO_FROM_NUMBER=... SMS_DRY_RUN=true`. Deploy `admin-clients` and `reminders` from `supabase/functions/`. Automated tests do not call Twilio. A dry run records an attempt without a SID and leaves its reminder pending; disabling dry-run can submit real SMS and incur provider charges.
 
 The database migration schedules the reminder endpoint for `0 8 * * *` UTC. Configure `app.settings.reminder_url` and a protected cron credential in Supabase, then validate standard-time and daylight-saving dates. The function always derives the business date in `Europe/Lisbon`. Failed or missing runs must feed the production alert configured during readiness review; a vet can rerun only the current Lisbon date from the portal.
 
@@ -27,7 +27,7 @@ Import this repository into Vercel, select the Next.js preset, and configure onl
 
 ## Data protection and launch gate
 
-The privacy page is deliberately marked as an unapproved draft. Complete every item in [docs/production-readiness.md](docs/production-readiness.md) with the veterinary practice and qualified Portuguese legal advice before processing real data. This includes controller details, lawful bases, notice wording, DPAs/transfers, retention periods, DPIA/DPO decisions, MFA, incident response, restricted access, alerting, and restoration evidence. The retention function accepts dates only after the schedule is approved; never automate unapproved periods.
+The privacy page is deliberately marked as an unapproved draft. The outstanding work is tracked separately in [the GDPR production-readiness change](openspec/changes/gdpr-production-readiness/tasks.md). Complete that change and every item in [docs/production-readiness.md](docs/production-readiness.md) with the veterinary practice and qualified Portuguese legal advice before processing real data. This includes controller details, lawful bases, notice wording, DPAs/transfers, retention periods, DPIA/DPO decisions, MFA, incident response, restricted access, alerting, and restoration evidence. The retention function accepts dates only after the schedule is approved; never automate unapproved periods.
 
 Clinic-assisted rights requests are recorded in `data_subject_requests`; use the documented workflow to verify identity, export/correct/restrict data, record a minimal outcome, cancel future reminders on erasure, and honor only a documented continuing retention basis.
 
