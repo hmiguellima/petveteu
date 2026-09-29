@@ -16,3 +16,14 @@ verify_jwt = false
 
 [functions.admin-clients]
 verify_jwt = true
+
+[functions.admin-vets]
+verify_jwt = true
+
+[auth.email.template.invite]
+subject = "Convite PetVet EU / PetVet EU invitation"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.magic_link]
+subject = "PetVet EU"
+content_path = "./supabase/templates/magic-link.html"
