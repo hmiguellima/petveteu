@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import type { Database } from './database.types.ts';
 
-type AppSupabaseClient = SupabaseClient<Database>;
+export type AppSupabaseClient = SupabaseClient<Database>;
 
 type DatabaseClients = {
   admin: AppSupabaseClient;
@@ -50,17 +50,16 @@ export async function requireVet(request: Request): Promise<VetContext> {
     throw new Error('unauthorized');
   }
 
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('role,mfa_required')
-    .eq('id', actor)
-    .single();
+  const [{ data: role }, { data: access }] = await Promise.all([
+    admin.from('account_roles').select('role').eq('profile_id', actor).eq('role', 'vet').single(),
+    admin.from('vet_access').select('status').eq('profile_id', actor).single(),
+  ]);
 
-  if (profile?.role !== 'vet') {
+  if (!role || access?.status !== 'active') {
     throw new Error('forbidden');
   }
 
-  if (profile.mfa_required && data.claims.aal !== 'aal2') {
+  if (data.claims.aal !== 'aal2') {
     throw new Error('forbidden');
   }
 

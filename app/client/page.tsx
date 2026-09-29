@@ -1,9 +1,10 @@
 import { getLocale } from 'next-intl/server';
-import Link from 'next/link';
 import { requireRole } from '@/lib/auth';
 import { createPet, removePet, updatePet, updateProfile } from './actions';
 import { ReadOnlySchedule, type ClientVaccinationView } from './read-only-schedule';
 import { getCatalog, resolveLocale, type Catalog } from '@/lib/i18n';
+import { PortalHeader } from '@/app/portal-header';
+import { deactivateClientRole } from '@/app/vet/membership-actions';
 
 type PageProps = {
   searchParams?: { error?: string; status?: string };
@@ -23,7 +24,7 @@ type PetView = {
 };
 
 export default async function Page({ searchParams }: PageProps): Promise<React.JSX.Element> {
-  const { supabase, profile } = await requireRole('client');
+  const { supabase, profile, roles } = await requireRole('client');
   const messages = getCatalog(resolveLocale(await getLocale()));
   const { data: pets } = await supabase
     .from('pets')
@@ -33,15 +34,15 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
 
   return (
     <>
-      <header className="mb-8 flex justify-between">
-        <div>
-          <p className="text-sage">PetVet EU</p>
-          <h1 className="text-4xl font-bold">
-            {messages.client.hello.replace('{name}', profile.full_name)}
-          </h1>
-        </div>
-        <Link href="/privacy">{messages.common.privacy}</Link>
-      </header>
+      <PortalHeader
+        currentPortal="client"
+        privacyLabel={messages.common.privacy}
+        profileName={profile.full_name}
+        roles={roles}
+        subtitle={messages.common.app}
+        switchLabel={messages.client.clinicPortal}
+        title={messages.client.hello.replace('{name}', profile.full_name)}
+      />
       <Feedback error={searchParams?.error} status={searchParams?.status} messages={messages} />
       <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
         <aside className="card">
@@ -73,6 +74,14 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
             </label>
             <button>{messages.common.save}</button>
           </form>
+          {roles.includes('vet') ? (
+            <div className="mt-6 border-t pt-6">
+              <p className="mb-3 text-sm text-slate-600">{messages.client.deactivateHelp}</p>
+              <form action={deactivateClientRole}>
+                <button className="bg-coral">{messages.client.deactivateClient}</button>
+              </form>
+            </div>
+          ) : null}
           <hr className="my-6" />
           <h2 className="mb-4 text-xl font-bold">{messages.client.addPet}</h2>
           <PetForm messages={messages} />
@@ -129,7 +138,9 @@ function Feedback({
   const message = error
     ? error === 'stale'
       ? messages.validation.stale
-      : messages.validation.invalid
+      : error === 'client-closure'
+        ? messages.client.closureRequired
+        : messages.validation.invalid
     : messages.client.saved;
 
   return (

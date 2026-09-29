@@ -1,7 +1,9 @@
 import { getLocale } from 'next-intl/server';
-import Link from 'next/link';
 import { requireRole } from '@/lib/auth';
 import { getCatalog, resolveLocale, type Catalog } from '@/lib/i18n';
+import { privacyNoticeVersion } from '@/lib/privacy';
+import { oneRelation } from '@/lib/relations';
+import { PortalHeader } from '@/app/portal-header';
 import {
   changeClientEmail,
   createVetPet,
@@ -14,15 +16,35 @@ import {
   updateVetPet,
 } from './actions';
 import { InviteClientForm } from './invite-client-form';
+import { MembershipPanel, type MembershipInvitation, type MembershipVet } from './membership-panel';
+import { NotificationsPanel, type MembershipNotification } from './notifications-panel';
 import { ReminderStatus, type ReminderStatusLabels, type ReminderView } from './reminder-status';
 
 type PageProps = { searchParams?: { error?: string; status?: string } };
 type RunStatus = 'failed' | 'running' | 'succeeded';
+type ClientSettingsRow = {
+  is_incomplete: boolean;
+  phone: string | null;
+  sms_enabled_by_client: boolean;
+  sms_enabled_by_vet: boolean;
+};
+type RegistryProfile = {
+  account_roles: { role: 'client' | 'vet' }[];
+  client_settings: ClientSettingsRow | ClientSettingsRow[];
+  email: string;
+  email_immutable: boolean;
+  full_name: string;
+  id: string;
+  locale: 'en' | 'pt-PT';
+  version: number;
+};
 type ClientView = {
   email: string;
+  email_immutable: boolean;
   full_name: string;
   id: string;
   is_incomplete: boolean;
+  is_vet: boolean;
   locale: 'en' | 'pt-PT';
   phone: string | null;
   sms_enabled_by_client: boolean;
@@ -47,10 +69,23 @@ type PetView = {
 // snapshots and concurrency versions are rendered atomically.
 // eslint-disable-next-line max-lines-per-function
 export default async function Page({ searchParams }: PageProps): Promise<React.JSX.Element> {
-  const { supabase, profile } = await requireRole('vet');
+  const { supabase, profile, roles } = await requireRole('vet');
   const messages = getCatalog(resolveLocale(await getLocale()));
-  const [{ data: clients }, { data: pets }, { data: runs }] = await Promise.all([
-    supabase.from('profiles').select('*').eq('role', 'client').order('full_name'),
+  const [
+    { data: clients },
+    { data: pets },
+    { data: runs },
+    { data: vetAccess },
+    { data: invitations },
+    { data: notifications },
+  ] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select(
+        'id,email,email_immutable,full_name,locale,version,client_role:account_roles!inner(role),account_roles(role),client_settings!inner(phone,is_incomplete,sms_enabled_by_client,sms_enabled_by_vet)',
+      )
+      .eq('client_role.role', 'client')
+      .order('full_name'),
     supabase
       .from('pets')
       .select('*,vaccination_entries(*,reminders(*,reminder_attempts(*)))')
@@ -60,19 +95,78 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
       .select('*')
       .order('business_date', { ascending: false })
       .limit(10),
+    supabase
+      .from('vet_access')
+      .select('profile_id,profiles!inner(id,email,full_name)')
+      .eq('status', 'active')
+      .order('activated_at'),
+    supabase
+      .from('vet_invitations')
+      .select('id,email,expires_at')
+      .eq('status', 'pending')
+      .order('created_at'),
+    supabase
+      .from('in_app_notifications')
+      .select(
+        'id,event,created_at,read_at,subject:profiles!in_app_notifications_subject_id_fkey(full_name),actor:profiles!in_app_notifications_actor_id_fkey(full_name)',
+      )
+      .order('created_at', { ascending: false })
+      .limit(50),
   ]);
+  const registryClients = (clients ?? []).map((client) => {
+    const profile = client as unknown as RegistryProfile;
+    const settings = oneRelation(profile.client_settings);
+
+    return {
+      email: profile.email,
+      email_immutable: profile.email_immutable,
+      full_name: profile.full_name,
+      id: profile.id,
+      is_incomplete: settings?.is_incomplete ?? true,
+      is_vet: profile.account_roles.some(({ role }) => role === 'vet'),
+      locale: profile.locale,
+      phone: settings?.phone ?? null,
+      sms_enabled_by_client: settings?.sms_enabled_by_client ?? true,
+      sms_enabled_by_vet: settings?.sms_enabled_by_vet ?? true,
+      version: profile.version,
+    };
+  });
+  const vets = (vetAccess ?? []).map(({ profiles }) => profiles) as MembershipVet[];
+  const membershipNotifications = (notifications ?? []).map((notification) => ({
+    actor_name: notification.actor?.full_name ?? null,
+    created_at: notification.created_at,
+    event: notification.event,
+    id: notification.id,
+    read_at: notification.read_at,
+    subject_name: notification.subject.full_name,
+  })) as MembershipNotification[];
 
   return (
     <>
-      <header className="mb-8 flex justify-between">
-        <div>
-          <p className="text-sage">{messages.common.app}</p>
-          <h1 className="text-4xl font-bold">{messages.vet.title}</h1>
-          <p>{profile.full_name}</p>
-        </div>
-        <Link href="/privacy">{messages.common.privacy}</Link>
-      </header>
+      <PortalHeader
+        currentPortal="vet"
+        privacyLabel={messages.common.privacy}
+        profileName={profile.full_name}
+        roles={roles}
+        subtitle={messages.common.app}
+        switchLabel={messages.vet.personalPortal}
+        title={messages.vet.title}
+      />
       <Feedback error={searchParams?.error} messages={messages} status={searchParams?.status} />
+      <MembershipPanel
+        currentProfileId={profile.id}
+        hasClientRole={roles.includes('client')}
+        invitations={(invitations ?? []) as MembershipInvitation[]}
+        locale={profile.locale}
+        messages={messages}
+        noticeVersion={privacyNoticeVersion()}
+        vets={vets}
+      />
+      <NotificationsPanel
+        locale={profile.locale}
+        messages={messages}
+        notifications={membershipNotifications}
+      />
       <div className="grid gap-6 lg:grid-cols-2">
         <section>
           <h2 className="mb-3 text-2xl font-bold">{messages.vet.clients}</h2>
@@ -81,17 +175,22 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
             <InviteClientForm messages={messages} />
           </details>
           <div className="space-y-3">
-            {clients?.map((client: ClientView) => (
+            {registryClients.map((client: ClientView) => (
               <article className="card" key={client.id}>
                 <form action={updateClient}>
                   <input type="hidden" name="id" value={client.id} />
                   <input type="hidden" name="version" value={client.version} />
                   <label>
                     {messages.auth.name}
-                    <input name="name" defaultValue={client.full_name} />
+                    <input
+                      name="name"
+                      defaultValue={client.full_name}
+                      readOnly={client.is_vet && client.id !== profile.id}
+                    />
                   </label>
                   <p className="text-sm">
                     {client.email}
+                    {client.id === profile.id ? ` · ` : ''}
                     {client.is_incomplete ? ` · ${messages.vet.incompleteContact}` : ''}
                   </p>
                   <label>
@@ -100,10 +199,20 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
                   </label>
                   <label>
                     {messages.auth.language}
-                    <select name="locale" defaultValue={client.locale}>
-                      <option value="pt-PT">Português</option>
-                      <option value="en">English</option>
-                    </select>
+                    {client.is_vet && client.id !== profile.id ? (
+                      <>
+                        <input type="hidden" name="locale" value={client.locale} />
+                        <select disabled value={client.locale}>
+                          <option value="pt-PT">Português</option>
+                          <option value="en">English</option>
+                        </select>
+                      </>
+                    ) : (
+                      <select name="locale" defaultValue={client.locale}>
+                        <option value="pt-PT">Português</option>
+                        <option value="en">English</option>
+                      </select>
+                    )}
                   </label>
                   <label className="flex">
                     <input type="checkbox" name="sms" defaultChecked={client.sms_enabled_by_vet} />{' '}
@@ -122,25 +231,32 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
                         : messages.vet.blocked,
                     )}
                   </p>
+                  {client.is_vet && client.id !== profile.id ? (
+                    <p className="text-sm text-slate-600">{messages.vet.protectedIdentity}</p>
+                  ) : null}
                   <button>{messages.common.save}</button>
                 </form>
-                <details className="mt-4">
-                  <summary className="cursor-pointer text-sm font-bold">
-                    {messages.vet.accessAndEmail}
-                  </summary>
-                  <form action={changeClientEmail} className="mt-3">
-                    <input type="hidden" name="id" value={client.id} />
-                    <label>
-                      {messages.vet.newEmail}
-                      <input required name="email" type="email" defaultValue={client.email} />
-                    </label>
-                    <button>{messages.vet.changeEmail}</button>
-                  </form>
-                  <form action={resendClientInvite} className="mt-3">
-                    <input type="hidden" name="id" value={client.id} />
-                    <button>{messages.vet.resendInvite}</button>
-                  </form>
-                </details>
+                {client.email_immutable ? (
+                  <p className="mt-4 text-sm text-slate-600">{messages.vet.protectedIdentity}</p>
+                ) : (
+                  <details className="mt-4">
+                    <summary className="cursor-pointer text-sm font-bold">
+                      {messages.vet.accessAndEmail}
+                    </summary>
+                    <form action={changeClientEmail} className="mt-3">
+                      <input type="hidden" name="id" value={client.id} />
+                      <label>
+                        {messages.vet.newEmail}
+                        <input required name="email" type="email" defaultValue={client.email} />
+                      </label>
+                      <button>{messages.vet.changeEmail}</button>
+                    </form>
+                    <form action={resendClientInvite} className="mt-3">
+                      <input type="hidden" name="id" value={client.id} />
+                      <button>{messages.vet.resendInvite}</button>
+                    </form>
+                  </details>
+                )}
                 <details className="mt-4">
                   <summary className="cursor-pointer text-sm font-bold">
                     {messages.vet.addPet}
@@ -246,15 +362,24 @@ function Feedback({
     return null;
   }
 
+  const errorMessages: Record<string, string> = {
+    'invalid-email': messages.membership.invalidEmail,
+    membership: messages.membership.failed,
+    stale: messages.validation.stale,
+    'duplicate-vaccine': messages.vet.duplicateVaccine,
+    'invalid-vaccine': messages.vet.invalidVaccine,
+  };
+  const statusMessages: Record<string, string> = {
+    'vet-invite': messages.membership.invited,
+    'vet-cancel': messages.membership.cancelled,
+    'vet-resend': messages.membership.resent,
+    'vet-revoke': messages.membership.revoked,
+  };
   const message = error
-    ? error === 'stale'
-      ? messages.validation.stale
-      : error === 'duplicate-vaccine'
-        ? messages.vet.duplicateVaccine
-        : error === 'invalid-vaccine'
-          ? messages.vet.invalidVaccine
-          : messages.vet.invalid
-    : messages.vet.saved;
+    ? (errorMessages[error] ?? messages.vet.invalid)
+    : status
+      ? (statusMessages[status] ?? messages.vet.saved)
+      : messages.vet.saved;
 
   return (
     <p className={`mb-5 rounded-lg p-3 ${error ? 'bg-red-100 text-red-900' : 'bg-green-100'}`}>

@@ -24,6 +24,7 @@
     "conflict": "An account already exists with that email or mobile number.",
     "credentials": "Incorrect email or password.",
     "profileError": "We could not load the account profile.",
+    "accessRevoked": "This account no longer has portal access.",
     "registered": "Account created. Confirm your email if requested, then sign in.",
     "privacyPrefix": "By creating an account, you confirm that you have read the",
     "privacyLink": "privacy notice"
@@ -42,7 +43,11 @@
     "saved": "Changes saved.",
     "noVaccines": "No vaccines recorded.",
     "scheduleLabel": "Vaccination schedule",
-    "expirySentence": "The clinic set reminders to end at {years} years of age."
+    "expirySentence": "The clinic set reminders to end at {years} years of age.",
+    "clinicPortal": "Open clinic portal",
+    "deactivateClient": "Deactivate my client area",
+    "deactivateHelp": "You can deactivate the client area only when no pets or retained client records remain.",
+    "closureRequired": "Client-area records still exist. Use the clinic-assisted closure workflow instead of direct deactivation."
   },
   "vet": {
     "title": "Veterinary portal",
@@ -78,7 +83,11 @@
     "saved": "Operation completed.",
     "duplicateVaccine": "An active vaccine with the same type and date already exists for this pet.",
     "invalidVaccine": "Invalid vaccine. Check the dates, type, and notes length.",
-    "invalid": "We could not complete the request. Check the details; email and phone must be unique."
+    "invalid": "We could not complete the request. Check the details; email and phone must be unique.",
+    "personalPortal": "Open personal client area",
+    "selfLabel": "You",
+    "protectedIdentity": "Shared name, language, and email can only be changed by this account holder.",
+    "identity": "My clinic identity"
   },
   "pet": {
     "name": "Name",
@@ -117,7 +126,50 @@
     "manualSecret": "Manual setup key",
     "code": "Six-digit code",
     "verify": "Verify and continue",
-    "error": "The code could not be verified. Check it and try again."
+    "error": "The code could not be verified. Check it and try again.",
+    "onboarding": "Choose your name and language. This becomes your shared profile."
+  },
+  "membership": {
+    "title": "Veterinary owners",
+    "email": "Vet email",
+    "invite": "Send invitation",
+    "revoke": "Revoke access",
+    "resend": "Resend",
+    "cancel": "Cancel",
+    "activateClient": "Activate my client area",
+    "privacy": "The current privacy notice is shown below. Presentation is recorded so the clinic can show what you were given; it is not consent.",
+    "confirmNotice": "I have been shown the current privacy notice",
+    "noticeLink": "Open the full privacy notice",
+    "activeVets": "Active owners",
+    "pendingInvites": "Pending invitations",
+    "noVets": "No active veterinary owners.",
+    "noInvites": "No pending invitations.",
+    "expires": "Expires {when}",
+    "you": "You",
+    "finalVet": "The last active veterinary owner cannot be revoked.",
+    "equalAuthority": "Every active owner can invite, resend, cancel, revoke, or reinstate another owner.",
+    "failed": "The membership request could not be completed.",
+    "invalidEmail": "Enter a valid email address.",
+    "noticeMissing": "The privacy notice version is not configured.",
+    "clientRoleFailed": "The client area could not be activated.",
+    "invited": "Invitation sent. The vet role is assigned and remains unusable until MFA is verified.",
+    "cancelled": "Invitation cancelled.",
+    "resent": "Invitation resent. The previous acceptance link is no longer valid.",
+    "revoked": "Veterinary access was revoked.",
+    "clientActivated": "Client area activated.",
+    "clientDeactivated": "Client area deactivated.",
+    "identitySaved": "Name and language saved.",
+    "systemActor": "the system",
+    "notifications": "Membership notifications",
+    "noNotifications": "No membership notifications.",
+    "markRead": "Mark as read",
+    "unread": "Unread",
+    "events": {
+      "vet_activated": "{subject} became an active veterinary owner{actorPhrase}.",
+      "vet_revoked": "{subject} had veterinary access revoked{actorPhrase}.",
+      "vet_reinstated": "{subject} was reinstated as a veterinary owner{actorPhrase}."
+    },
+    "actorPhrase": " by {actor}"
   },
   "validation": {
     "invalid": "We could not save the changes. Check every field and try again."

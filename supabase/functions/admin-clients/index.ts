@@ -25,15 +25,20 @@ Deno.serve(async (request) => {
       targetId = input.clientId;
       const { data: profile } = await admin
         .from('profiles')
-        .select('role,email')
+        .select('email,email_immutable,account_roles!inner(role)')
         .eq('id', targetId)
-        .single();
+        .eq('account_roles.role', 'client')
+        .maybeSingle();
 
-      if (profile?.role !== 'client') {
+      if (!profile) {
         return json({ error: 'invalid_target' }, 400);
       }
 
       if (input.operation === 'change_email') {
+        if (profile.email_immutable) {
+          return json({ error: 'immutable_email' }, 400);
+        }
+
         const { error } = await admin.auth.admin.updateUserById(targetId, { email: input.email });
 
         if (error) {

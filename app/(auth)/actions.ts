@@ -2,7 +2,8 @@
 
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { portalPathForRole } from '@/lib/auth-routing';
+import type { Role } from '@/lib/auth';
+import { portalPathForRoles } from '@/lib/auth-routing';
 import { createClient } from '@/lib/supabase/server';
 import { registrationSchema } from '@/lib/validation';
 
@@ -19,7 +20,7 @@ export async function signIn(form: FormData): Promise<void> {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, locale')
+    .select('locale, account_roles(role)')
     .eq('id', data.user.id)
     .single();
 
@@ -30,7 +31,13 @@ export async function signIn(form: FormData): Promise<void> {
 
   cookies().set('locale', profile.locale, { sameSite: 'lax', path: '/' });
 
-  redirect(portalPathForRole(profile.role));
+  const roles = profile.account_roles.map(({ role }: { role: Role }) => role);
+  if (roles.length === 0) {
+    await supabase.auth.signOut();
+    redirect('/sign-in?error=access-revoked');
+  }
+
+  redirect(portalPathForRoles(roles));
 }
 
 export async function register(form: FormData): Promise<void> {

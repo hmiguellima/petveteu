@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { portalPathForRole, redirectForRoleAccess } from '@/lib/auth-routing';
+import { portalPathForRoles, redirectForRoleAccess } from '@/lib/auth-routing';
 import { registrationSchema } from '@/lib/validation';
 
 describe('registration validation', () => {
@@ -33,11 +33,11 @@ describe('registration validation', () => {
 
 describe('portal routing', () => {
   it('routes each database role to its own portal', () => {
-    expect(portalPathForRole('client')).toBe('/client');
-    expect(portalPathForRole('vet')).toBe('/vet');
-    expect(redirectForRoleAccess('client', 'client')).toBeNull();
-    expect(redirectForRoleAccess('vet', 'vet')).toBeNull();
-    expect(redirectForRoleAccess('client', 'vet')).toBe('/client');
-    expect(redirectForRoleAccess('vet', 'client')).toBe('/vet');
+    expect(portalPathForRoles(['client'])).toBe('/client');
+    expect(portalPathForRoles(['vet'])).toBe('/vet');
+    expect(redirectForRoleAccess(['client'], 'client')).toBeNull();
+    expect(redirectForRoleAccess(['vet'], 'vet')).toBeNull();
+    expect(redirectForRoleAccess(['client'], 'vet')).toBe('/client');
+    expect(redirectForRoleAccess(['vet'], 'client')).toBe('/vet');
   });
 });

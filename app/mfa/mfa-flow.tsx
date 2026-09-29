@@ -9,14 +9,20 @@ export type MfaMessages = {
   code: string;
   enroll: string;
   error: string;
+  language: string;
   manualSecret: string;
+  name: string;
+  onboarding: string;
   preparing: string;
   scan: string;
   verify: string;
 };
 
 type MfaFlowProperties = {
+  initialFullName: string;
+  initialLocale: 'en' | 'pt-PT';
   messages: MfaMessages;
+  profileVersion: number;
 };
 
 type Setup = {
@@ -25,11 +31,20 @@ type Setup = {
   secret?: string;
 };
 
-export function MfaFlow({ messages }: MfaFlowProperties): React.JSX.Element {
+// The flow keeps enrollment, challenge, identity onboarding, and activation in one state machine.
+// eslint-disable-next-line max-lines-per-function
+export function MfaFlow({
+  initialFullName,
+  initialLocale,
+  messages,
+  profileVersion,
+}: MfaFlowProperties): React.JSX.Element {
   const router = useRouter();
   const started = useRef(false);
   const [setup, setSetup] = useState<Setup>();
   const [code, setCode] = useState('');
+  const [fullName, setFullName] = useState(initialFullName);
+  const [locale, setLocale] = useState<'en' | 'pt-PT'>(initialLocale);
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
 
@@ -49,6 +64,10 @@ export function MfaFlow({ messages }: MfaFlowProperties): React.JSX.Element {
         throw assurance.error;
       }
       if (assurance.data.currentLevel === 'aal2') {
+        const activation = await supabase.rpc('activate_my_vet_access');
+        if (activation.error) {
+          throw activation.error;
+        }
         router.replace('/vet');
         router.refresh();
         return;
@@ -92,7 +111,13 @@ export function MfaFlow({ messages }: MfaFlowProperties): React.JSX.Element {
 
   async function verify(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (!setup || !/^\d{6}$/.test(code)) {
+    if (
+      !setup ||
+      code.length !== 6 ||
+      [...code].some((character) => character < '0' || character > '9') ||
+      !fullName.trim() ||
+      fullName.trim().length > 120
+    ) {
       setError(messages.error);
       return;
     }
@@ -115,6 +140,25 @@ export function MfaFlow({ messages }: MfaFlowProperties): React.JSX.Element {
     });
 
     if (verification.error) {
+      setError(messages.error);
+      setSubmitting(false);
+      return;
+    }
+
+    const identity = await supabase.rpc('update_my_shared_identity', {
+      p_full_name: fullName.trim(),
+      p_locale: locale,
+      p_version: profileVersion,
+    });
+    if (identity.error) {
+      setError(messages.error);
+      setSubmitting(false);
+      return;
+    }
+
+    document.cookie = `locale=${locale}; path=/; samesite=lax`;
+    const activation = await supabase.rpc('activate_my_vet_access');
+    if (activation.error) {
       setError(messages.error);
       setSubmitting(false);
       return;
@@ -149,6 +193,26 @@ export function MfaFlow({ messages }: MfaFlowProperties): React.JSX.Element {
         </div>
       ) : null}
       <form onSubmit={verify}>
+        <p className="mb-3">{messages.onboarding}</p>
+        <label>
+          {messages.name}
+          <input
+            maxLength={120}
+            onChange={(event) => setFullName(event.target.value)}
+            required
+            value={fullName}
+          />
+        </label>
+        <label>
+          {messages.language}
+          <select
+            onChange={(event) => setLocale(event.target.value === 'en' ? 'en' : 'pt-PT')}
+            value={locale}
+          >
+            <option value="pt-PT">Português</option>
+            <option value="en">English</option>
+          </select>
+        </label>
         <label>
           {messages.code}
           <input

@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   listFactors: vi.fn(),
   refresh: vi.fn(),
   replace: vi.fn(),
+  rpc: vi.fn(),
   unenroll: vi.fn(),
   verify: vi.fn(),
 }));
@@ -31,6 +32,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
+    rpc: mocks.rpc,
     auth: {
       mfa: {
         challenge: mocks.challenge,
@@ -48,7 +50,10 @@ const messages: MfaMessages = {
   code: 'Six-digit code',
   enroll: 'Scan the QR code.',
   error: 'Verification failed.',
+  language: 'Language',
   manualSecret: 'Manual setup key',
+  name: 'Name',
+  onboarding: 'Choose your name and language.',
   preparing: 'Preparing…',
   scan: 'MFA QR code',
   verify: 'Verify and continue',
@@ -64,6 +69,7 @@ describe('MFA flow', () => {
       error: null,
     });
     mocks.unenroll.mockResolvedValue({ error: null });
+    mocks.rpc.mockResolvedValue({ error: null });
   });
 
   it('enrolls a TOTP factor and displays its setup details', async () => {
@@ -76,7 +82,14 @@ describe('MFA flow', () => {
       error: null,
     });
 
-    render(<MfaFlow messages={messages} />);
+    render(
+      <MfaFlow
+        initialFullName="Invited Vet"
+        initialLocale="pt-PT"
+        messages={messages}
+        profileVersion={1}
+      />,
+    );
 
     expect(await screen.findByAltText('MFA QR code')).toBeTruthy();
     expect(screen.getByText(/SETUP-SECRET/)).toBeTruthy();
@@ -97,7 +110,14 @@ describe('MFA flow', () => {
     mocks.challenge.mockResolvedValue({ data: { id: 'challenge-1' }, error: null });
     mocks.verify.mockResolvedValue({ data: {}, error: null });
 
-    render(<MfaFlow messages={messages} />);
+    render(
+      <MfaFlow
+        initialFullName="Invited Vet"
+        initialLocale="pt-PT"
+        messages={messages}
+        profileVersion={1}
+      />,
+    );
 
     const input = await screen.findByLabelText('Six-digit code');
     fireEvent.change(input, { target: { value: '123456' } });
@@ -110,6 +130,12 @@ describe('MFA flow', () => {
       code: '123456',
       factorId: 'factor-verified',
     });
+    expect(mocks.rpc).toHaveBeenNthCalledWith(1, 'update_my_shared_identity', {
+      p_full_name: 'Invited Vet',
+      p_locale: 'pt-PT',
+      p_version: 1,
+    });
+    expect(mocks.rpc).toHaveBeenNthCalledWith(2, 'activate_my_vet_access');
     expect(mocks.replace).toHaveBeenCalledWith('/vet');
     expect(mocks.refresh).toHaveBeenCalledOnce();
   });

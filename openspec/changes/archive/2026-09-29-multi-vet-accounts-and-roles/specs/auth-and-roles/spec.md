@@ -1,33 +1,4 @@
-# auth-and-roles Specification
-
-## Purpose
-
-TBD - created by archiving change vet-office-pets-sms. Update Purpose after archive.
-
-## Requirements
-
-### Requirement: Next.js frontend on Vercel
-
-The registration pages, sign-in pages, client portal, and vet portal SHALL be implemented as a Next.js web application. Production hosting of that application MUST be Vercel.
-
-#### Scenario: Frontend is Next.js on Vercel
-
-- **WHEN** the web UI is built and deployed to production
-- **THEN** the codebase is a Next.js application and the production host is Vercel
-
-### Requirement: Client self-registration
-
-The system SHALL allow a person to create a client account by providing full name, a unique email, a unique mobile phone number in E.164 format, a password that meets the system's password policy, and a UI language preference defaulting to Portuguese.
-
-#### Scenario: Successful client registration
-
-- **WHEN** a visitor submits valid registration details including an unused email and unused phone number
-- **THEN** the system creates a client account, authenticates the session, and opens the client portal
-
-#### Scenario: Duplicate email or phone
-
-- **WHEN** a visitor submits a registration whose email or phone already belongs to an account
-- **THEN** the system rejects the registration and does not create an account
+## MODIFIED Requirements
 
 ### Requirement: Authenticated sessions
 
@@ -91,20 +62,6 @@ The system SHALL perform privileged Supabase Auth operations only in narrowly sc
 - **WHEN** any portal is built or used
 - **THEN** no service-role credential is included in browser code, responses, or browser-visible environment variables
 
-### Requirement: Protected records use explicit mutation functions
-
-The system SHALL revoke direct browser-role insert, update, and delete access to protected application tables and SHALL expose only narrowly scoped database mutation functions for supported portal changes. Each function MUST validate the caller's current role and ownership, accept only fields that role may change, use a fixed safe search path and schema-qualified objects, and have minimal execute grants. A security-definer function MUST perform authorization explicitly rather than relying on RLS execution context.
-
-#### Scenario: Direct protected-table update is denied
-
-- **WHEN** an authenticated portal user submits a direct update against a protected application table
-- **THEN** the database denies the write even if the user could select that row
-
-#### Scenario: Client mutation cannot accept protected fields
-
-- **WHEN** a client invokes an allowed profile or pet mutation
-- **THEN** the function derives identity from the authenticated session and provides no parameter for role, mirrored email, the vet SMS setting, pet ownership, or notification expiry age
-
 ### Requirement: Role-based portals
 
 The system SHALL allow each identity to hold zero, one, or both current roles of `client` and `vet`. A client role grants only that identity's client-domain access. A vet role grants single-practice clinic access only at AAL2. A dual-role identity MUST be able to switch between clinic and personal portals without changing its role assignments, and portal selection MUST NOT be an authorization input.
@@ -124,24 +81,7 @@ The system SHALL allow each identity to hold zero, one, or both current roles of
 - **WHEN** a user supplies a client or vet portal URL without the corresponding current role
 - **THEN** the server and database deny the request regardless of UI state
 
-### Requirement: Single vet account
-
-The system SHALL have at most one account with role `vet`. That account MUST be created only through a one-time bootstrap process when no vet account exists. Public registration MUST create `client` accounts only. The system MUST NOT provide a way for the vet (or anyone else) to create additional vet accounts.
-
-#### Scenario: Bootstrap the vet
-
-- **WHEN** no vet account exists and an operator completes the bootstrap process with valid vet credentials
-- **THEN** the system creates the single `vet` account
-
-#### Scenario: Second vet is rejected
-
-- **WHEN** a vet account already exists and anyone attempts to create another `vet` account (including a second bootstrap)
-- **THEN** the system rejects the attempt and leaves the existing vet account unchanged
-
-#### Scenario: Public registration is always a client
-
-- **WHEN** a visitor completes registration
-- **THEN** the system assigns role `client` and does not create a vet account
+## ADDED Requirements
 
 ### Requirement: Multiple equal-authority vet owners
 

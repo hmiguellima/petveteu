@@ -24,6 +24,7 @@
     "conflict": "Já existe uma conta com esse email ou telemóvel.",
     "credentials": "Email ou palavra-passe incorretos.",
     "profileError": "Não foi possível carregar o perfil da conta.",
+    "accessRevoked": "Esta conta já não tem acesso ao portal.",
     "registered": "Conta criada. Confirme o email, se solicitado, e inicie sessão.",
     "privacyPrefix": "Ao criar uma conta, confirma que consultou o",
     "privacyLink": "aviso de privacidade"
@@ -42,7 +43,11 @@
     "saved": "Alterações guardadas.",
     "noVaccines": "Sem vacinas registadas.",
     "scheduleLabel": "Calendário de vacinação",
-    "expirySentence": "A clínica definiu o fim dos lembretes aos {years} anos."
+    "expirySentence": "A clínica definiu o fim dos lembretes aos {years} anos.",
+    "clinicPortal": "Abrir a área veterinária",
+    "deactivateClient": "Desativar a minha área de cliente",
+    "deactivateHelp": "Só pode desativar a área de cliente quando não restarem animais nem obrigações de conservação.",
+    "closureRequired": "Ainda existem registos da área de cliente. Use o fluxo de encerramento assistido pela clínica."
   },
   "vet": {
     "title": "Área veterinária",
@@ -78,7 +83,11 @@
     "saved": "Operação concluída.",
     "duplicateVaccine": "Já existe uma vacina ativa com o mesmo tipo e data para este animal.",
     "invalidVaccine": "Vacina inválida. Confirme as datas, o tipo e o tamanho das notas.",
-    "invalid": "Não foi possível concluir. Confirme os dados; o email e o telefone têm de ser únicos."
+    "invalid": "Não foi possível concluir. Confirme os dados; o email e o telefone têm de ser únicos.",
+    "personalPortal": "Abrir a área pessoal de cliente",
+    "selfLabel": "Eu",
+    "protectedIdentity": "O nome, o idioma e o email partilhados só podem ser alterados pelo titular desta conta.",
+    "identity": "A minha identidade na clínica"
   },
   "pet": {
     "name": "Nome",
@@ -117,7 +126,50 @@
     "manualSecret": "Chave para configuração manual",
     "code": "Código de seis dígitos",
     "verify": "Validar e continuar",
-    "error": "Não foi possível validar o código. Confirme-o e tente novamente."
+    "error": "Não foi possível validar o código. Confirme-o e tente novamente.",
+    "onboarding": "Escolha o nome e o idioma. Passam a ser o perfil partilhado."
+  },
+  "membership": {
+    "title": "Proprietários veterinários",
+    "email": "Email do veterinário",
+    "invite": "Enviar convite",
+    "revoke": "Revogar acesso",
+    "resend": "Reenviar",
+    "cancel": "Cancelar",
+    "activateClient": "Ativar a minha área de cliente",
+    "privacy": "O aviso de privacidade atual é apresentado abaixo. O sistema regista a apresentação para evidência do que lhe foi mostrado; isto não constitui consentimento.",
+    "confirmNotice": "Foi-me apresentado o aviso de privacidade atual",
+    "noticeLink": "Abrir o aviso de privacidade completo",
+    "activeVets": "Proprietários ativos",
+    "pendingInvites": "Convites pendentes",
+    "noVets": "Não há proprietários veterinários ativos.",
+    "noInvites": "Não há convites pendentes.",
+    "expires": "Expira {when}",
+    "you": "Eu",
+    "finalVet": "O último proprietário veterinário ativo não pode ser revogado.",
+    "equalAuthority": "Qualquer proprietário ativo pode convidar, reenviar, cancelar, revogar ou reintegrar outro proprietário.",
+    "failed": "Não foi possível concluir o pedido de adesão.",
+    "invalidEmail": "Indique um endereço de email válido.",
+    "noticeMissing": "A versão do aviso de privacidade não está configurada.",
+    "clientRoleFailed": "Não foi possível ativar a área de cliente.",
+    "invited": "Convite enviado. A função de veterinário fica atribuída e só é utilizável depois da MFA.",
+    "cancelled": "Convite cancelado.",
+    "resent": "Convite reenviado. A ligação anterior deixou de ser válida.",
+    "revoked": "O acesso veterinário foi revogado.",
+    "clientActivated": "Área de cliente ativada.",
+    "clientDeactivated": "Área de cliente desativada.",
+    "identitySaved": "Nome e idioma guardados.",
+    "systemActor": "o sistema",
+    "notifications": "Notificações de adesão",
+    "noNotifications": "Não há notificações de adesão.",
+    "markRead": "Marcar como lida",
+    "unread": "Por ler",
+    "events": {
+      "vet_activated": "{subject} passou a proprietário veterinário ativo{actorPhrase}.",
+      "vet_revoked": "{subject} teve o acesso veterinário revogado{actorPhrase}.",
+      "vet_reinstated": "{subject} foi reintegrado como proprietário veterinário{actorPhrase}."
+    },
+    "actorPhrase": " por {actor}"
   },
   "validation": {
     "invalid": "Não foi possível guardar. Confirme todos os campos e tente novamente.",
