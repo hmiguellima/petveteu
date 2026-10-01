@@ -19,6 +19,10 @@
     "verify:admin": "node scripts/verify-admin-clients.mjs",
     "verify:auth": "node scripts/verify-auth.mjs",
     "verify:e2e": "node scripts/verify-e2e-smoke.mjs",
+    "test:e2e": "node scripts/run-browser-e2e.mjs",
+    "test:e2e:dry": "node scripts/run-browser-e2e.mjs --dry-run",
+    "test:e2e:all": "pnpm test:e2e && pnpm test:e2e:dry",
+    "test:e2e:report": "playwright show-report playwright-report/sms",
     "typecheck": "tsc --noEmit",
     "check": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm test"
   },
@@ -33,6 +37,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@testing-library/react": "^16.0.1",
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.5",

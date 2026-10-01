@@ -3,7 +3,11 @@
   <body>
     <h1>Convite PetVet EU</h1>
     <p>Foi convidado para aceder ao PetVet EU.</p>
-    <p><a href="{{ .ConfirmationURL }}">Aceitar convite e configurar a conta</a></p>
+    <p>
+      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=invite"
+        >Aceitar convite e configurar a conta</a
+      >
+    </p>
     <p>
       O convite expira ao fim de sete dias. Depois de entrar, escolha o nome e o idioma e configure
       a autenticação multifator.
@@ -11,7 +15,11 @@
     <hr />
     <h1>PetVet EU invitation</h1>
     <p>You have been invited to access PetVet EU.</p>
-    <p><a href="{{ .ConfirmationURL }}">Accept the invitation and set up the account</a></p>
+    <p>
+      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=invite"
+        >Accept the invitation and set up the account</a
+      >
+    </p>
     <p>
       The invitation expires after seven days. After signing in, choose your name and language and
       configure multi-factor authentication.

@@ -1,12 +1,11 @@
-import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import type { Database } from '../_shared/database.types.ts';
 import { renderReminderMessage } from '../_shared/reminder-message.ts';
 import { createCandidate, findReminderForDueDate, type CandidateRow } from './candidate.ts';
 import { submitWithTwilio } from './delivery.ts';
 import { decide, lisbonDate } from './engine.ts';
 import { hasValidCronCredential, runHealth } from './operations.ts';
-
-type AppSupabaseClient = SupabaseClient<Database>;
+import { requireVet } from '../_shared/admin.ts';
 
 type TriggerSource = 'manual' | 'scheduled';
 type Invocation = { mode?: 'monitor'; source?: TriggerSource };
@@ -32,37 +31,13 @@ function assertNoError(error: { message: string } | null): void {
   }
 }
 
-async function authorizeVet(request: Request, supabase: AppSupabaseClient): Promise<boolean> {
-  const authorization = request.headers.get('Authorization') ?? '';
-  const [scheme, token, ...extraParts] = authorization.trim().split(/\s+/);
-
-  if (scheme.toLowerCase() !== 'bearer' || !token || extraParts.length > 0) {
+async function authorizeVet(request: Request): Promise<boolean> {
+  try {
+    await requireVet(request);
+    return true;
+  } catch {
     return false;
   }
-
-  const userSupabase = createClient<Database>(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { Authorization: authorization } } },
-  );
-  const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
-  const actor = claimsData?.claims.sub;
-
-  if (claimsError || !actor) {
-    return false;
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role,mfa_required')
-    .eq('id', actor)
-    .single();
-
-  if (profile?.role !== 'vet') {
-    return false;
-  }
-
-  return !profile.mfa_required || claimsData.claims.aal === 'aal2';
 }
 
 async function sendAlert(businessDate: string, health: 'failed' | 'missing'): Promise<void> {
@@ -91,7 +66,7 @@ Deno.serve(async (request) => {
   const source: TriggerSource = invocation.source === 'manual' ? 'manual' : 'scheduled';
 
   if (source === 'manual') {
-    if (!(await authorizeVet(request, supabase))) {
+    if (!(await authorizeVet(request))) {
       return new Response('forbidden', { status: 403 });
     }
   } else if (
@@ -235,6 +210,7 @@ Deno.serve(async (request) => {
           accountSid: Deno.env.get('TWILIO_ACCOUNT_SID')!,
           authToken: Deno.env.get('TWILIO_AUTH_TOKEN')!,
           fromNumber: Deno.env.get('TWILIO_FROM_NUMBER')!,
+          apiBaseUrl: localTwilioBaseUrl(),
         },
       );
       const { error: attemptError } = await supabase.from('reminder_attempts').insert({
@@ -277,3 +253,18 @@ Deno.serve(async (request) => {
     return Response.json({ error: 'batch_failed' }, { status: 500 });
   }
 });
+
+function localTwilioBaseUrl(): string | undefined {
+  const override = Deno.env.get('TWILIO_API_BASE_URL');
+  if (!override) {
+    return undefined;
+  }
+  const supabaseHost = new URL(Deno.env.get('SUPABASE_URL')!).hostname;
+  const target = new URL(override);
+  const localHosts = ['127.0.0.1', 'localhost', 'kong', 'host.docker.internal'];
+  if (!localHosts.includes(supabaseHost) || !localHosts.includes(target.hostname)) {
+    throw new Error('twilio_override_requires_local_services');
+  }
+
+  return target.origin;
+}

@@ -4,3 +4,6 @@
 coverage
 node_modules
 package-lock.json
+.e2e
+playwright-report
+test-results

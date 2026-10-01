@@ -18,10 +18,10 @@ async function unbanExistingProfile(
 
 Deno.serve(async (request) => {
   try {
-    const { admin, actor } = await requireVet(request);
+    const { admin, actor, caller } = await requireVet(request);
     const input = parseAdminVetInput(await request.json());
     if (input.operation === 'revoke') {
-      const { error } = await admin.rpc('vet_revoke_role', { p_profile_id: input.profileId });
+      const { error } = await caller.rpc('vet_revoke_role', { p_profile_id: input.profileId });
       if (error) {
         throw error;
       }
@@ -91,7 +91,7 @@ Deno.serve(async (request) => {
         throw result.error;
       }
       createdUser = true;
-      profile = { email: input.email, id: result.data.user.id };
+      profile = { email: input.email, id: result.data.user.id, locale: 'pt-PT' };
     } else {
       const metadataUpdate = await admin.auth.admin.updateUserById(profile.id, {
         user_metadata: { invitation_language: 'localized', locale: profile.locale },

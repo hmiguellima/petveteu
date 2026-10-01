@@ -3,21 +3,37 @@
   <body>
     {{ if eq (index .Data "invitation_language") "bilingual" }}
     <h1>Continuar convite PetVet EU</h1>
-    <p><a href="{{ .ConfirmationURL }}">Continuar a configuração da conta</a></p>
+    <p>
+      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=magiclink"
+        >Continuar a configuração da conta</a
+      >
+    </p>
     <p>Depois de entrar, escolha o nome e o idioma e configure a autenticação multifator.</p>
     <hr />
     <h1>Continue your PetVet EU invitation</h1>
-    <p><a href="{{ .ConfirmationURL }}">Continue account setup</a></p>
+    <p>
+      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=magiclink"
+        >Continue account setup</a
+      >
+    </p>
     <p>
       After signing in, choose your name and language and configure multi-factor authentication.
     </p>
     {{ else if eq (index .Data "locale") "en" }}
     <h1>PetVet EU invitation</h1>
-    <p><a href="{{ .ConfirmationURL }}">Continue account setup</a></p>
+    <p>
+      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=magiclink"
+        >Continue account setup</a
+      >
+    </p>
     <p>After signing in, configure multi-factor authentication.</p>
     {{ else }}
     <h1>Convite PetVet EU</h1>
-    <p><a href="{{ .ConfirmationURL }}">Continuar a configuração da conta</a></p>
+    <p>
+      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=magiclink"
+        >Continuar a configuração da conta</a
+      >
+    </p>
     <p>Depois de entrar, configure a autenticação multifator.</p>
     {{ end }}
   </body>

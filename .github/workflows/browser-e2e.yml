@@ -1,0 +1,40 @@
+name: Browser E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chromium:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run check
+      - run: pnpm build
+      - run: pnpm exec deno check supabase/functions/admin-clients/index.ts supabase/functions/admin-vets/index.ts supabase/functions/reminders/index.ts
+      - run: pnpm test:e2e:all
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-e2e-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

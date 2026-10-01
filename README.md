@@ -35,6 +35,7 @@ The operational details are in the [rights runbook](docs/data-subject-rights-run
 
 ## Verification
 
+- Browser product suites: `pnpm test:e2e:all` — isolated local Supabase, real Auth/MFA, and Twilio HTTP mock. See [coverage and run instructions](docs/browser-e2e.md).
 - Database security checks: [docs/database-verification.sql](docs/database-verification.sql)
 - End-to-end procedure: [docs/smoke-test.md](docs/smoke-test.md)
 - Production gate: [docs/production-readiness.md](docs/production-readiness.md)
