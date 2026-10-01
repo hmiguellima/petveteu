@@ -1,45 +1,15 @@
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import type { Database } from '../_shared/database.types.ts';
 import { renderReminderMessage } from '../_shared/reminder-message.ts';
+import { createCandidate, findReminderForDueDate, type CandidateRow } from './candidate.ts';
 import { submitWithTwilio } from './delivery.ts';
-import { decide, lisbonDate, type Candidate } from './engine.ts';
+import { decide, lisbonDate } from './engine.ts';
 import { hasValidCronCredential, runHealth } from './operations.ts';
 
 type AppSupabaseClient = SupabaseClient<Database>;
 
 type TriggerSource = 'manual' | 'scheduled';
 type Invocation = { mode?: 'monitor'; source?: TriggerSource };
-type ReminderAttemptRow = {
-  outcome: string;
-  reason_code: string | null;
-  created_at: string;
-};
-type ReminderRow = {
-  id: string;
-  due_date: string;
-  status: string;
-  reminder_attempts?: ReminderAttemptRow[];
-};
-type ProfileRow = {
-  phone: string | null;
-  locale: 'pt-PT' | 'en';
-  sms_enabled_by_client: boolean;
-  sms_enabled_by_vet: boolean;
-};
-type PetRow = {
-  name: string;
-  date_of_birth: string;
-  notification_expiry_years: number;
-  deleted_at: string | null;
-  profiles: ProfileRow;
-};
-type CandidateRow = {
-  id: string;
-  due_date: string;
-  vaccine_type: string;
-  pets: PetRow;
-  reminders?: ReminderRow[];
-};
 
 function addDays(date: string, numberOfDays: number): string {
   const result = new Date(`${date}T00:00:00Z`);
@@ -54,38 +24,6 @@ async function invocationFrom(request: Request): Promise<Invocation> {
   } catch {
     return {};
   }
-}
-
-function findReminderForDueDate(row: CandidateRow): ReminderRow | undefined {
-  return row.reminders?.find((reminder) => reminder.due_date === row.due_date);
-}
-
-function latestAttempt(reminder?: ReminderRow): ReminderAttemptRow | undefined {
-  return reminder?.reminder_attempts?.toSorted((left, right) =>
-    right.created_at.localeCompare(left.created_at),
-  )[0];
-}
-
-function createCandidate(row: CandidateRow, existingReminder?: ReminderRow): Candidate {
-  const pet = row.pets;
-  const profile = pet.profiles;
-  const attempt = latestAttempt(existingReminder);
-
-  return {
-    entryId: row.id,
-    dueDate: row.due_date,
-    petName: pet.name,
-    birthDate: pet.date_of_birth,
-    expiryYears: pet.notification_expiry_years,
-    deletedAt: pet.deleted_at,
-    phone: profile.phone,
-    clientSms: profile.sms_enabled_by_client,
-    vetSms: profile.sms_enabled_by_vet,
-    locale: profile.locale,
-    vaccineType: row.vaccine_type,
-    reminderStatus: existingReminder?.status,
-    permanentReason: attempt?.outcome === 'permanent_skip' ? attempt.reason_code : null,
-  };
 }
 
 function assertNoError(error: { message: string } | null): void {
@@ -189,10 +127,7 @@ Deno.serve(async (request) => {
     .select()
     .single();
   if (lockError || !run) {
-    return Response.json(
-      { businessDate: today, skipped: 'already_running_or_succeeded' },
-      { status: 409 },
-    );
+    return Response.json({ businessDate: today, skipped: 'already_running_or_succeeded' });
   }
 
   try {
@@ -218,7 +153,7 @@ Deno.serve(async (request) => {
     const { data: rows, error } = await supabase
       .from('vaccination_entries')
       .select(
-        'id,due_date,vaccine_type,pets!inner(name,date_of_birth,notification_expiry_years,deleted_at,profiles!inner(phone,locale,sms_enabled_by_client,sms_enabled_by_vet)),reminders(id,due_date,status,reminder_attempts(reason_code,outcome,created_at))',
+        'id,due_date,vaccine_type,pets!inner(name,date_of_birth,notification_expiry_years,deleted_at,profiles!inner(locale,client_settings!inner(phone,sms_enabled_by_client,sms_enabled_by_vet))),reminders(id,due_date,status,reminder_attempts(reason_code,outcome,created_at))',
       )
       .gte('due_date', today)
       .lte('due_date', windowEndDate)
@@ -229,6 +164,9 @@ Deno.serve(async (request) => {
       const row = rawRow as unknown as CandidateRow;
       const pet = row.pets;
       const profile = pet.profiles;
+      const settings = Array.isArray(profile.client_settings)
+        ? profile.client_settings[0]
+        : profile.client_settings;
       const existingReminder = findReminderForDueDate(row);
       const decision = decide(createCandidate(row, existingReminder), today);
       if (decision.reason === 'outside_window' || decision.reason === 'already_submitted') {
@@ -291,7 +229,7 @@ Deno.serve(async (request) => {
             petName: pet.name,
             vaccineType: row.vaccine_type,
           }),
-          to: profile.phone!,
+          to: settings.phone!,
         },
         {
           accountSid: Deno.env.get('TWILIO_ACCOUNT_SID')!,

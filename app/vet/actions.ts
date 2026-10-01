@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { requireRole } from '@/lib/auth';
+import { reminderRunPath } from '@/lib/reminder-run';
 import { phoneSchema, vaccinationSchema, vetClientSchema, vetPetSchema } from '@/lib/validation';
 
 const inviteSchema = z.object({
@@ -254,7 +255,10 @@ export async function removeVaccine(formData: FormData): Promise<void> {
 export async function manualRun(): Promise<void> {
   const { supabase } = await requireRole('vet');
 
-  await supabase.functions.invoke('reminders', { body: { source: 'manual' } });
+  const { data, error } = await supabase.functions.invoke('reminders', {
+    body: { source: 'manual' },
+  });
 
   revalidatePath('/vet');
+  redirect(reminderRunPath(data, error));
 }

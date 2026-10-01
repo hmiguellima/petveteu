@@ -368,12 +368,15 @@ function Feedback({
     stale: messages.validation.stale,
     'duplicate-vaccine': messages.vet.duplicateVaccine,
     'invalid-vaccine': messages.vet.invalidVaccine,
+    'reminder-run': messages.vet.reminderRunFailed,
   };
   const statusMessages: Record<string, string> = {
     'vet-invite': messages.membership.invited,
     'vet-cancel': messages.membership.cancelled,
     'vet-resend': messages.membership.resent,
     'vet-revoke': messages.membership.revoked,
+    'reminder-run-completed': messages.vet.reminderRunCompleted,
+    'reminder-run-skipped': messages.vet.reminderRunSkipped,
   };
   const message = error
     ? (errorMessages[error] ?? messages.vet.invalid)

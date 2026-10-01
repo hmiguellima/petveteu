@@ -22,6 +22,8 @@ describe('catalogs', () => {
   it('covers vet and MFA surfaces in both locales', () => {
     expect(getCatalog('pt-PT').vet.runToday).toBe('Processar lembretes de hoje');
     expect(getCatalog('en').vet.runToday).toBe("Process today's reminders");
+    expect(getCatalog('pt-PT').vet.reminderRunCompleted).toContain('não garante o envio de SMS');
+    expect(getCatalog('en').vet.reminderRunSkipped).toContain('No new batch');
     expect(getCatalog('pt-PT').mfa.title).toBe('Autenticação multifator obrigatória');
     expect(getCatalog('en').mfa.title).toBe('Multi-factor authentication required');
   });
