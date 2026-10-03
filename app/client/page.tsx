@@ -29,6 +29,8 @@ export default async function Page({ searchParams }: PageProps): Promise<React.J
   const { data: pets } = await supabase
     .from('pets')
     .select('*,vaccination_entries(id,vaccine_type,due_date)')
+    .is('deleted_at', null)
+    .is('vaccination_entries.deleted_at', null)
     .eq('owner_id', profile.id)
     .order('name');
 

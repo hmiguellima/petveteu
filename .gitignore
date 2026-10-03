@@ -8,3 +8,6 @@ coverage
 supabase/.branches
 supabase/.temp
 .env*
+playwright-report/
+test-results/
+.e2e/

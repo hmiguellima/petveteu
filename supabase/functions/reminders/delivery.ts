@@ -4,6 +4,7 @@ export type SmsMessage = {
 };
 
 export type TwilioConfiguration = {
+  apiBaseUrl?: string;
   accountSid: string;
   authToken: string;
   fromNumber: string;
@@ -41,7 +42,7 @@ export async function submitWithTwilio(
   let response: Response;
   try {
     response = await fetchImplementation(
-      `https://api.twilio.com/2010-04-01/Accounts/${configuration.accountSid}/Messages.json`,
+      `${configuration.apiBaseUrl ?? 'https://api.twilio.com'}/2010-04-01/Accounts/${configuration.accountSid}/Messages.json`,
       {
         method: 'POST',
         headers: {

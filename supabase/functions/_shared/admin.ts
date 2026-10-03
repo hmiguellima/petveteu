@@ -11,6 +11,7 @@ type DatabaseClients = {
 type VetContext = {
   actor: string;
   admin: AppSupabaseClient;
+  caller: AppSupabaseClient;
 };
 
 function getBearerToken(request: Request): string {
@@ -63,7 +64,7 @@ export async function requireVet(request: Request): Promise<VetContext> {
     throw new Error('forbidden');
   }
 
-  return { admin, actor };
+  return { admin, actor, caller };
 }
 
 export async function resendClientInvitation(

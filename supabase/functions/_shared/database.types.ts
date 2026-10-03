@@ -301,6 +301,7 @@ export type Database = {
         Row: {
           created_at: string;
           email: string;
+          email_immutable: boolean;
           full_name: string;
           id: string;
           is_incomplete: boolean;
@@ -318,6 +319,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           email: string;
+          email_immutable?: boolean;
           full_name: string;
           id: string;
           is_incomplete?: boolean;
@@ -335,6 +337,7 @@ export type Database = {
         Update: {
           created_at?: string;
           email?: string;
+          email_immutable?: boolean;
           full_name?: string;
           id?: string;
           is_incomplete?: boolean;

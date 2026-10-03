@@ -1,6 +1,13 @@
 {
   "extends": ["next/core-web-vitals", "next/typescript", "prettier"],
-  "ignorePatterns": [".next/", "coverage/", "node_modules/"],
+  "ignorePatterns": [
+    ".next/",
+    ".e2e/",
+    "playwright-report/",
+    "test-results/",
+    "coverage/",
+    "node_modules/"
+  ],
   "rules": {
     "array-callback-return": "error",
     "@typescript-eslint/consistent-type-imports": [
